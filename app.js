@@ -1,6 +1,6 @@
 // ===== 찍스티커 (ZzikSticker) - main app logic =====
 
-const BUILD_ID = "build-2026-08-19-07-diary";
+const BUILD_ID = "build-2026-08-19-08-book";
 console.log("[찍스티커]", BUILD_ID);
 window.addEventListener("DOMContentLoaded", () => {
   const badge = document.getElementById("build-badge");
@@ -119,6 +119,26 @@ const myEntryCount = $("my-entry-count");
 const myStickerCount = $("my-sticker-count");
 const monthEntryCount = $("month-entry-count");
 const monthMoodSummary = $("month-mood-summary");
+const diaryDisplayToggle = $("diary-display-toggle");
+const diaryCalendarPanel = $("diary-calendar-panel");
+const diaryBookPanel = $("diary-book-panel");
+const bookPageCount = $("book-page-count");
+const bookPrevBtn = $("book-prev-btn");
+const bookNextBtn = $("book-next-btn");
+const bookPage = $("book-page");
+const bookPageContent = $("book-page-content");
+const bookEntryDate = $("book-entry-date");
+const bookEntryTitle = $("book-entry-title");
+const bookEntryMood = $("book-entry-mood");
+const bookEntryNote = $("book-entry-note");
+const bookPhoto = $("book-photo");
+const bookPhotoImg = $("book-photo-img");
+const bookStickerLayer = $("book-sticker-layer");
+const bookPageNumber = $("book-page-number");
+const bookEmpty = $("book-empty");
+const bookFirstWriteBtn = $("book-first-write-btn");
+const bookNewBtn = $("book-new-btn");
+const bookEditBtn = $("book-edit-btn");
 
 const toastEl = $("toast");
 const navBtns = document.querySelectorAll(".nav-btn");
@@ -2050,8 +2070,10 @@ const MOOD_EMOJI = {
   tired: "😴",
   sad: "🥺",
 };
+const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const DIARY_NAME_KEY = "zzik-diary-name";
 const APP_THEME_KEY = "zzik-app-theme";
+const DIARY_DISPLAY_KEY = "zzik-diary-display";
 const TODAY_PROMPTS = [
   "오늘 가장 웃겼던 일은 뭐였나요?",
   "오늘 꼭 기억하고 싶은 순간은?",
@@ -2066,6 +2088,9 @@ let currentDiaryDraft = null;
 let diaryAutosaveTimer = null;
 let diaryPhotoUrl = null;
 let selectedDiaryStickerId = null;
+let diaryBookEntries = [];
+let diaryBookIndex = -1;
+let bookPhotoUrl = null;
 
 function diaryIdForDate(dateKey) {
   return "d_" + dateKey;
@@ -2237,6 +2262,102 @@ appThemeGrid.querySelectorAll("button").forEach((button) => {
   button.addEventListener("click", () => applyAppTheme(button.dataset.appTheme));
 });
 applyAppTheme(localStorage.getItem(APP_THEME_KEY) || "pastel");
+
+function setDiaryDisplay(mode) {
+  const selected = mode === "calendar" ? "calendar" : "book";
+  localStorage.setItem(DIARY_DISPLAY_KEY, selected);
+  $("calendar-view").dataset.diaryDisplay = selected;
+  diaryDisplayToggle.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.diaryDisplay === selected));
+  diaryCalendarPanel.classList.toggle("active", selected === "calendar");
+  diaryBookPanel.classList.toggle("active", selected === "book");
+  if (selected === "book") renderDiaryBook();
+}
+
+diaryDisplayToggle.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", () => setDiaryDisplay(button.dataset.diaryDisplay));
+});
+setDiaryDisplay(localStorage.getItem(DIARY_DISPLAY_KEY) || "book");
+
+async function renderDiaryBook(preferredDateKey) {
+  diaryBookEntries = (await getAllDiaryEntries())
+    .filter(entryHasContent)
+    .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  if (!diaryBookEntries.length) {
+    diaryBookIndex = -1;
+  } else if (preferredDateKey) {
+    const found = diaryBookEntries.findIndex((entry) => entry.dateKey === preferredDateKey);
+    diaryBookIndex = found >= 0 ? found : diaryBookEntries.length - 1;
+  } else if (diaryBookIndex < 0 || diaryBookIndex >= diaryBookEntries.length) {
+    diaryBookIndex = diaryBookEntries.length - 1;
+  }
+  await renderDiaryBookPage();
+}
+
+async function renderDiaryBookPage() {
+  const entry = diaryBookIndex >= 0 ? diaryBookEntries[diaryBookIndex] : null;
+  bookPageCount.textContent = diaryBookEntries.length + (diaryBookEntries.length === 1 ? " page" : " pages");
+  bookPrevBtn.disabled = !entry || diaryBookIndex <= 0;
+  bookNextBtn.disabled = !entry || diaryBookIndex >= diaryBookEntries.length - 1;
+  bookEditBtn.disabled = !entry;
+  bookEmpty.classList.toggle("active", !entry);
+  bookPageContent.classList.toggle("hidden", !entry);
+  if (!entry) {
+    bookStickerLayer.innerHTML = "";
+    bookPhoto.classList.add("hidden");
+    return;
+  }
+
+  bookPage.classList.remove("turning");
+  void bookPage.offsetWidth;
+  bookPage.classList.add("turning");
+  bookPage.dataset.paperTheme = entry.paperTheme || "lavender";
+  bookEntryDate.textContent = formatDiaryDate(entry.dateKey, true);
+  bookEntryTitle.textContent = entry.title || "나의 하루";
+  bookEntryMood.textContent = MOOD_EMOJI[entry.mood] || "✨";
+  bookEntryNote.textContent = entry.note || "사진과 스티커로 남긴 소중한 기억";
+  bookPageNumber.textContent = String(diaryBookIndex + 1).padStart(2, "0");
+
+  if (bookPhotoUrl) {
+    URL.revokeObjectURL(bookPhotoUrl);
+    bookPhotoUrl = null;
+  }
+  bookPhoto.classList.toggle("hidden", !entry.photoBlob);
+  if (entry.photoBlob) bookPhotoUrl = setImgFromBlob(bookPhotoImg, entry.photoBlob);
+
+  const stickers = await getAllStickers();
+  const stickerMap = new Map(stickers.map((item) => [item.id, item]));
+  bookStickerLayer.innerHTML = "";
+  (entry.stickers || []).forEach((placement) => {
+    const sticker = stickerMap.get(placement.stickerId);
+    if (!sticker) return;
+    const img = document.createElement("img");
+    img.className = "book-sticker";
+    img.style.left = placement.x + "%";
+    img.style.top = placement.y + "%";
+    img.style.setProperty("--book-sticker-size", Math.max(34, (placement.size || 76) * 0.72) + "px");
+    img.style.setProperty("--book-sticker-rot", (placement.rot || 0) + "deg");
+    img.alt = "";
+    setImgFromBlob(img, sticker.blob);
+    bookStickerLayer.appendChild(img);
+  });
+}
+
+bookPrevBtn.addEventListener("click", () => {
+  if (diaryBookIndex <= 0) return;
+  diaryBookIndex -= 1;
+  renderDiaryBookPage();
+});
+bookNextBtn.addEventListener("click", () => {
+  if (diaryBookIndex >= diaryBookEntries.length - 1) return;
+  diaryBookIndex += 1;
+  renderDiaryBookPage();
+});
+bookEditBtn.addEventListener("click", () => {
+  const entry = diaryBookEntries[diaryBookIndex];
+  if (entry) openDiaryEditor(entry.dateKey);
+});
+bookNewBtn.addEventListener("click", () => openDiaryEditor(toDateKey(new Date())));
+bookFirstWriteBtn.addEventListener("click", () => openDiaryEditor(toDateKey(new Date())));
 
 function setDiaryMood(mood) {
   if (!currentDiaryDraft) return;
@@ -2500,7 +2621,6 @@ diaryToolBtns.forEach((button) => {
 
 // ================= Calendar =================
 let calendarViewDate = new Date();
-const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 async function renderCalendar() {
   const [grouped, diaryEntries] = await Promise.all([getStickersGroupedByDate(), getAllDiaryEntries()]);
@@ -2586,6 +2706,7 @@ async function renderCalendar() {
 
     calendarGrid.appendChild(cell);
   }
+  if ($("calendar-view").dataset.diaryDisplay === "book") await renderDiaryBook();
 }
 
 calPrevBtn.addEventListener("click", () => {

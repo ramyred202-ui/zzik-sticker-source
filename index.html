@@ -152,7 +152,11 @@
         <button class="icon-btn-sm" id="cal-next-btn">›</button>
       </div>
     </div>
-    <div class="calendar-scroll">
+    <div class="diary-display-toggle" id="diary-display-toggle">
+      <button class="active" data-diary-display="book">📖 다이어리</button>
+      <button data-diary-display="calendar">▦ 달력</button>
+    </div>
+    <div class="calendar-scroll diary-display-panel" id="diary-calendar-panel">
       <div class="calendar-month-title"><span id="calendar-title">2026년 8월</span><small>기억하고 싶은 날을 눌러보세요</small></div>
       <div class="weekday-row">
         <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
@@ -164,6 +168,39 @@
         <h2><span id="month-entry-count">0일</span>의 추억을 남겼어요</h2>
         <p id="month-mood-summary">첫 기록을 기다리고 있어요 ✨</p>
       </article>
+    </div>
+    <div class="diary-book-panel diary-display-panel active" id="diary-book-panel">
+      <div class="book-shelf-label"><span>MY MEMORY BOOK</span><small id="book-page-count">0 pages</small></div>
+      <div class="diary-book-stage">
+        <button class="book-nav-btn" id="book-prev-btn" aria-label="이전 페이지">‹</button>
+        <article class="memory-book" id="memory-book">
+          <div class="book-edge" aria-hidden="true"></div>
+          <div class="book-spine" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="book-page" id="book-page">
+            <div class="book-page-content" id="book-page-content">
+              <div class="book-page-heading">
+                <div><p id="book-entry-date">오늘의 페이지</p><h2 id="book-entry-title">아직 비어 있어요</h2></div>
+                <span id="book-entry-mood">✨</span>
+              </div>
+              <div class="book-photo hidden" id="book-photo"><img id="book-photo-img" alt="다이어리 사진" /></div>
+              <p class="book-entry-note" id="book-entry-note">첫 번째 추억을 책에 남겨볼까요?</p>
+              <div class="book-sticker-layer" id="book-sticker-layer"></div>
+              <div class="book-page-number" id="book-page-number">01</div>
+            </div>
+            <div class="book-empty" id="book-empty">
+              <span>📖</span><strong>나의 첫 페이지</strong><p>오늘의 사진과 마음을 남겨보세요.</p>
+              <button id="book-first-write-btn">첫 페이지 쓰기</button>
+            </div>
+          </div>
+          <div class="book-ribbon" aria-hidden="true"></div>
+        </article>
+        <button class="book-nav-btn" id="book-next-btn" aria-label="다음 페이지">›</button>
+      </div>
+      <div class="book-actions">
+        <button class="book-new-btn" id="book-new-btn">＋ 오늘 페이지</button>
+        <button class="book-edit-btn" id="book-edit-btn">이 페이지 꾸미기 ✎</button>
+      </div>
+      <p class="book-swipe-hint">양옆 화살표로 추억을 넘겨보세요</p>
     </div>
   </section>
 

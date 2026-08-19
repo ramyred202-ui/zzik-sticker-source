@@ -1627,6 +1627,13 @@ body[data-app-theme="vintage"] {
 /* diary calendar */
 .diary-topbar { padding-top: calc(19px + var(--safe-top)); }
 .diary-topbar .calendar-nav { align-self: flex-end; }
+#calendar-view[data-diary-display="book"] .calendar-nav { visibility: hidden; }
+.diary-display-toggle { flex-shrink: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin: 0 18px 12px; padding: 4px; border: 1px solid rgba(102,77,137,.07); border-radius: 16px; background: rgba(255,255,255,.72); }
+.diary-display-toggle button { border: none; border-radius: 12px; padding: 9px 8px; color: var(--ink-soft); background: transparent; font-size: 11px; font-weight: 900; }
+.diary-display-toggle button.active { color: var(--memory-primary); background: #fff; box-shadow: 0 5px 14px rgba(73,50,104,.09); }
+#calendar-view .diary-display-panel { display: none; }
+#calendar-view .diary-display-panel.active { display: block; }
+#calendar-view .calendar-scroll.diary-display-panel.active { display: block; }
 .calendar-month-title { display: flex; align-items: baseline; justify-content: space-between; margin: 2px 4px 13px; }
 .calendar-month-title span { font-size: 18px; font-weight: 900; }
 .calendar-month-title small { color: var(--ink-soft); font-size: 10px; }
@@ -1640,6 +1647,62 @@ body[data-app-theme="vintage"] {
 .month-summary { margin: 22px 3px 10px; padding: 25px 20px 20px; }
 .month-summary h2 { margin: 6px 0; font-size: 17px; }
 .month-summary > p:last-child { margin: 0; color: var(--ink-soft); font-size: 12px; }
+
+/* diary book reader */
+.diary-book-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 12px 24px; scrollbar-width: none; }
+.diary-book-panel::-webkit-scrollbar { display: none; }
+.book-shelf-label { display: flex; align-items: center; justify-content: space-between; width: min(100%, 430px); margin: 0 auto 8px; padding: 0 25px; }
+.book-shelf-label span { color: var(--memory-primary); font-size: 9px; font-weight: 900; letter-spacing: 1.2px; }
+.book-shelf-label small { color: var(--ink-soft); font-size: 9px; font-weight: 800; }
+.diary-book-stage { display: grid; grid-template-columns: 29px minmax(0, 1fr) 29px; align-items: center; width: min(100%, 440px); margin: 0 auto; }
+.book-nav-btn { position: relative; z-index: 5; width: 31px; height: 46px; border: none; border-radius: 15px; color: var(--memory-primary); background: rgba(255,255,255,.9); box-shadow: 0 7px 20px rgba(70,47,96,.12); font-size: 25px; font-weight: 400; }
+.book-nav-btn:disabled { opacity: .25; }
+
+.memory-book { position: relative; min-width: 0; margin: 0 -1px; padding: 13px 12px 13px 21px; border-radius: 12px 25px 25px 12px; background: linear-gradient(145deg, var(--memory-primary), var(--memory-secondary)); box-shadow: 0 24px 45px rgba(70,45,100,.25), inset 2px 0 rgba(255,255,255,.28); transform: rotate(-.4deg); }
+.memory-book::before { content: ""; position: absolute; inset: 7px 5px 7px 11px; border: 1px solid rgba(255,255,255,.28); border-radius: 8px 20px 20px 8px; pointer-events: none; }
+.book-edge { position: absolute; z-index: 1; right: 4px; top: 18px; bottom: 18px; width: 11px; border-radius: 0 15px 15px 0; background: repeating-linear-gradient(to bottom,#fff 0 2px,#e8dfeb 2px 3px); opacity: .9; }
+.book-spine { position: absolute; z-index: 6; left: -5px; top: 8%; bottom: 8%; display: flex; flex-direction: column; justify-content: space-around; }
+.book-spine i { display: block; width: 33px; height: 8px; border: 2px solid #8c8293; border-radius: 99px; background: linear-gradient(#f4f1f6,#aaa1af); box-shadow: 0 2px 3px rgba(43,31,54,.2); }
+.book-page { position: relative; z-index: 2; min-height: 465px; overflow: hidden; border-radius: 4px 17px 17px 4px; padding: 29px 26px 29px 32px; background: linear-gradient(100deg,#f1eaf1 0,#fffdf8 5%,#fffdf8 94%,#ece3e9 100%); box-shadow: inset 8px 0 15px rgba(68,49,78,.08), 0 4px 8px rgba(46,30,57,.16); }
+.book-page::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .32; background-image: repeating-linear-gradient(0deg,transparent 0 24px,rgba(130,105,145,.09) 24px 25px); }
+.book-page[data-paper-theme="pink"] { background: linear-gradient(100deg,#eddde4 0,#fff6fa 5%,#fff6fa 94%,#ecdce3 100%); }
+.book-page[data-paper-theme="blue"] { background: linear-gradient(100deg,#dbe8ee 0,#f7fdff 5%,#f7fdff 94%,#d9e8ee 100%); }
+.book-page[data-paper-theme="cream"] { background: linear-gradient(100deg,#dfcfb9 0,#fff8eb 5%,#fff8eb 94%,#e3d2bb 100%); }
+.book-page[data-paper-theme="night"] { color: #f8f5ff; background: linear-gradient(100deg,#211f3e 0,#35325c 5%,#35325c 94%,#211f3e 100%); }
+.book-page[data-paper-theme="night"] .book-entry-note { color: rgba(255,255,255,.76); }
+.book-page.turning .book-page-content { animation: book-page-turn .26s ease; transform-origin: left center; }
+@keyframes book-page-turn { 0% { transform: perspective(700px) rotateY(-7deg); opacity: .35; } 100% { transform: perspective(700px) rotateY(0); opacity: 1; } }
+.book-page-content { position: relative; z-index: 2; min-height: 405px; }
+.book-page-heading { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 12px; border-bottom: 2px dashed rgba(135,107,145,.17); }
+.book-page-heading p { margin: 0 0 5px; color: var(--memory-primary); font-size: 9px; font-weight: 900; letter-spacing: .5px; }
+.book-page-heading h2 { max-width: 225px; margin: 0; font-size: 20px; line-height: 1.25; letter-spacing: -.7px; }
+.book-page-heading > span { font-size: 30px; transform: rotate(5deg); }
+.book-photo { position: relative; margin: 15px 5px 11px; padding: 7px 7px 22px; background: #fff; box-shadow: 0 7px 14px rgba(59,40,67,.14); transform: rotate(-1deg); }
+.book-photo::after { content: "memory ♡"; position: absolute; right: 9px; bottom: 6px; color: #b29aaa; font-size: 7px; letter-spacing: .5px; }
+.book-photo img { display: block; width: 100%; max-height: 175px; object-fit: cover; }
+.book-entry-note { position: relative; z-index: 3; margin: 16px 3px; max-height: 108px; overflow: hidden; color: #62576d; font-size: 12px; line-height: 2.05; white-space: pre-wrap; }
+.book-sticker-layer { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
+.book-sticker { position: absolute; width: var(--book-sticker-size,62px); height: var(--book-sticker-size,62px); transform: translate(-50%,-50%) rotate(var(--book-sticker-rot,0deg)); object-fit: contain; filter: drop-shadow(0 4px 4px rgba(50,35,65,.16)); }
+.book-page-number { position: absolute; right: 2px; bottom: 0; color: #a496aa; font: 800 9px/1 inherit; letter-spacing: 1px; }
+.book-empty { position: absolute; z-index: 8; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.book-empty.active { display: flex; }
+.book-empty > span { font-size: 39px; }
+.book-empty strong { margin-top: 10px; font-size: 17px; }
+.book-empty p { margin: 7px 0 17px; color: var(--ink-soft); font-size: 11px; }
+.book-empty button { border: none; border-radius: 999px; padding: 11px 16px; color: #fff; background: var(--memory-primary); font-size: 11px; font-weight: 900; }
+.book-ribbon { position: absolute; z-index: 5; right: 34px; bottom: -17px; width: 18px; height: 50px; background: var(--memory-secondary); clip-path: polygon(0 0,100% 0,100% 100%,50% 78%,0 100%); filter: drop-shadow(0 2px 2px rgba(50,30,60,.16)); }
+.book-actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: 9px; width: min(calc(100% - 56px), 360px); margin: 17px auto 0; }
+.book-actions button { border: none; border-radius: 15px; padding: 12px 9px; font-size: 11px; font-weight: 900; }
+.book-new-btn { color: var(--memory-primary); background: var(--memory-pale); }
+.book-edit-btn { color: #fff; background: linear-gradient(135deg,var(--memory-primary),var(--memory-secondary)); box-shadow: 0 9px 18px rgba(107,77,170,.2); }
+.book-edit-btn:disabled { opacity: .38; box-shadow: none; }
+.book-swipe-hint { margin: 12px 0 0; color: var(--ink-soft); font-size: 9px; font-weight: 700; text-align: center; }
+
+@media (max-height: 720px) {
+  .book-page { min-height: 395px; }
+  .book-page-content { min-height: 335px; }
+  .book-photo img { max-height: 125px; }
+}
 
 /* my page */
 .my-avatar { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 17px; background: #fff; box-shadow: var(--memory-shadow); font-size: 23px; transform: rotate(3deg); }

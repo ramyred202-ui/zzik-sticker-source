@@ -1,5 +1,5 @@
-const SHELL_CACHE = "zziksticker-shell-v27-diary";
-const RUNTIME_CACHE = "zziksticker-runtime-v27-diary";
+const SHELL_CACHE = "zziksticker-shell-v28-book";
+const RUNTIME_CACHE = "zziksticker-runtime-v28-book";
 
 const SHELL_FILES = [
   "./",
