@@ -1,6 +1,6 @@
 // ===== 찍스티커 (ZzikSticker) - main app logic =====
 
-const BUILD_ID = "build-2026-08-19-08-book";
+const BUILD_ID = "build-2026-08-20-09-recommend";
 console.log("[찍스티커]", BUILD_ID);
 window.addEventListener("DOMContentLoaded", () => {
   const badge = document.getElementById("build-badge");
@@ -81,6 +81,8 @@ const daySheetClose = $("day-sheet-close");
 
 const todayDateLabel = $("today-date-label");
 const todayMoodPicker = $("today-mood-picker");
+const moodStickerTitle = $("mood-sticker-title");
+const moodStickerList = $("mood-sticker-list");
 const todayWriteBtn = $("today-write-btn");
 const emptyWriteBtn = $("empty-write-btn");
 const todaySeeAll = $("today-see-all");
@@ -93,6 +95,7 @@ const navCreateBtn = $("nav-create-btn");
 const createDiaryBtn = $("create-diary-btn");
 const createStickerBtn = $("create-sticker-btn");
 const quickPhotoBtn = $("quick-photo-btn");
+const quickTemplateRow = $("quick-template-row");
 
 const diaryEditor = $("diary-editor");
 const diaryEditorClose = $("diary-editor-close");
@@ -108,6 +111,8 @@ const diaryPhotoFrame = $("diary-photo-frame");
 const diaryPhotoPreview = $("diary-photo-preview");
 const diaryPhotoRemove = $("diary-photo-remove");
 const diaryStickerLayer = $("diary-sticker-layer");
+const diaryTemplatePanel = $("diary-template-panel");
+const diaryTemplateBadge = $("diary-template-badge");
 const diaryThemePanel = $("diary-theme-panel");
 const diaryStickerPicker = $("diary-sticker-picker");
 const diaryToolBtns = document.querySelectorAll(".diary-tools button");
@@ -130,6 +135,7 @@ const bookPageContent = $("book-page-content");
 const bookEntryDate = $("book-entry-date");
 const bookEntryTitle = $("book-entry-title");
 const bookEntryMood = $("book-entry-mood");
+const bookTemplateLabel = $("book-template-label");
 const bookEntryNote = $("book-entry-note");
 const bookPhoto = $("book-photo");
 const bookPhotoImg = $("book-photo-img");
@@ -2070,6 +2076,51 @@ const MOOD_EMOJI = {
   tired: "😴",
   sad: "🥺",
 };
+const MOOD_STICKER_RECOMMENDATIONS = {
+  excited: { title: "신나는 날엔 톡톡 튀게!", stickers: ["🎉", "⭐", "🪩", "💥"] },
+  happy: { title: "행복한 마음을 더 반짝이게", stickers: ["💖", "🎀", "🌸", "✨"] },
+  calm: { title: "포근하고 잔잔한 오늘", stickers: ["☁️", "🌙", "🫧", "🕯️"] },
+  tired: { title: "수고한 나를 위한 휴식", stickers: ["💤", "☕", "🛌", "🌧️"] },
+  sad: { title: "내 마음을 꼭 안아줄게", stickers: ["🫂", "💌", "🌈", "☔"] },
+};
+const DIARY_TEMPLATES = {
+  daily: {
+    badge: "MY DAILY",
+    titlePlaceholder: "오늘의 제목",
+    notePlaceholder: "오늘의 이야기를 자유롭게 적어보세요…",
+    seed: "",
+  },
+  photo: {
+    badge: "PHOTO LOG",
+    titlePlaceholder: "이 사진의 제목은?",
+    notePlaceholder: "사진 속 순간을 설명해보세요…",
+    seed: "",
+  },
+  gratitude: {
+    badge: "THANK YOU NOTE",
+    titlePlaceholder: "오늘의 고마운 마음",
+    notePlaceholder: "오늘 고마웠던 일을 적어보세요…",
+    seed: "오늘 고마웠던 세 가지\n1. \n2. \n3. ",
+  },
+  school: {
+    badge: "SCHOOL DAYS",
+    titlePlaceholder: "오늘 학교에서는",
+    notePlaceholder: "수업, 친구, 급식 이야기를 적어보세요…",
+    seed: "오늘의 수업 ✏️\n\n친구와 있었던 일 💬\n\n오늘의 급식 🍱\n",
+  },
+  travel: {
+    badge: "TRAVEL NOTE",
+    titlePlaceholder: "오늘의 여행지",
+    notePlaceholder: "어디에서 어떤 추억을 만들었나요?",
+    seed: "📍 오늘의 장소: \n\n가장 기억에 남는 순간: \n\n다시 가고 싶은 이유: ",
+  },
+  mood: {
+    badge: "MOOD JOURNAL",
+    titlePlaceholder: "지금 내 마음의 색깔",
+    notePlaceholder: "지금 느끼는 마음을 솔직하게 적어보세요…",
+    seed: "지금 내 마음은…\n\n그렇게 느낀 이유는…\n\n나에게 해주고 싶은 말은…",
+  },
+};
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const DIARY_NAME_KEY = "zzik-diary-name";
 const APP_THEME_KEY = "zzik-app-theme";
@@ -2115,6 +2166,7 @@ function createDiaryDraft(dateKey) {
     title: "",
     note: "",
     mood: "",
+    templateId: "daily",
     paperTheme: "lavender",
     photoBlob: null,
     stickers: [],
@@ -2182,6 +2234,42 @@ function makeDiaryPreview(entry) {
   return button;
 }
 
+function renderMoodStickerRecommendations(mood) {
+  moodStickerList.innerHTML = "";
+  const recommendation = MOOD_STICKER_RECOMMENDATIONS[mood];
+  if (!recommendation) {
+    moodStickerTitle.textContent = "기분을 골라보세요";
+    return;
+  }
+  moodStickerTitle.textContent = recommendation.title;
+  recommendation.stickers.forEach((emoji) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = emoji;
+    button.setAttribute("aria-label", emoji + " 스티커를 오늘 다이어리에 붙이기");
+    button.addEventListener("click", async () => {
+      await openDiaryEditor(toDateKey(new Date()));
+      setDiaryMood(mood);
+      addEmojiStickerToDiary(emoji);
+    });
+    moodStickerList.appendChild(button);
+  });
+}
+
+async function saveTodayMood(mood) {
+  try {
+    const todayKey = toDateKey(new Date());
+    const entry = (await getDiaryByDate(todayKey)) || createDiaryDraft(todayKey);
+    entry.mood = mood;
+    entry.updatedAt = Date.now();
+    await putDiaryEntry(entry);
+    await renderToday();
+  } catch (err) {
+    console.error("mood save failed", err);
+    toast("오늘의 무드를 저장하지 못했어요");
+  }
+}
+
 async function renderToday() {
   const now = new Date();
   const todayKey = toDateKey(now);
@@ -2196,6 +2284,7 @@ async function renderToday() {
   todayMoodPicker.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("active", !!todayEntry && button.dataset.mood === todayEntry.mood);
   });
+  renderMoodStickerRecommendations(todayEntry && todayEntry.mood);
 }
 
 async function renderMyPage() {
@@ -2229,6 +2318,12 @@ createDiaryBtn.addEventListener("click", () => {
   closeCreateSheet();
   openDiaryEditor(toDateKey(new Date()));
 });
+quickTemplateRow.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", async () => {
+    closeCreateSheet();
+    await openDiaryEditor(toDateKey(new Date()), null, button.dataset.createTemplate);
+  });
+});
 createStickerBtn.addEventListener("click", () => {
   closeCreateSheet();
   showView("camera-view");
@@ -2243,10 +2338,7 @@ todaySeeAll.addEventListener("click", () => showView("calendar-view"));
 todaySettingsBtn.addEventListener("click", () => showView("my-view"));
 
 todayMoodPicker.querySelectorAll("button").forEach((button) => {
-  button.addEventListener("click", async () => {
-    await openDiaryEditor(toDateKey(new Date()));
-    setDiaryMood(button.dataset.mood);
-  });
+  button.addEventListener("click", () => saveTodayMood(button.dataset.mood));
 });
 
 myNameEdit.addEventListener("click", () => {
@@ -2311,6 +2403,8 @@ async function renderDiaryBookPage() {
   void bookPage.offsetWidth;
   bookPage.classList.add("turning");
   bookPage.dataset.paperTheme = entry.paperTheme || "lavender";
+  bookPage.dataset.template = entry.templateId || "daily";
+  bookTemplateLabel.textContent = (DIARY_TEMPLATES[entry.templateId || "daily"] || DIARY_TEMPLATES.daily).badge;
   bookEntryDate.textContent = formatDiaryDate(entry.dateKey, true);
   bookEntryTitle.textContent = entry.title || "나의 하루";
   bookEntryMood.textContent = MOOD_EMOJI[entry.mood] || "✨";
@@ -2329,16 +2423,19 @@ async function renderDiaryBookPage() {
   bookStickerLayer.innerHTML = "";
   (entry.stickers || []).forEach((placement) => {
     const sticker = stickerMap.get(placement.stickerId);
-    if (!sticker) return;
-    const img = document.createElement("img");
-    img.className = "book-sticker";
-    img.style.left = placement.x + "%";
-    img.style.top = placement.y + "%";
-    img.style.setProperty("--book-sticker-size", Math.max(34, (placement.size || 76) * 0.72) + "px");
-    img.style.setProperty("--book-sticker-rot", (placement.rot || 0) + "deg");
-    img.alt = "";
-    setImgFromBlob(img, sticker.blob);
-    bookStickerLayer.appendChild(img);
+    if (placement.kind !== "emoji" && !sticker) return;
+    const visual = document.createElement(placement.kind === "emoji" ? "span" : "img");
+    visual.className = "book-sticker" + (placement.kind === "emoji" ? " book-emoji-sticker" : "");
+    visual.style.left = placement.x + "%";
+    visual.style.top = placement.y + "%";
+    visual.style.setProperty("--book-sticker-size", Math.max(34, (placement.size || 76) * 0.72) + "px");
+    visual.style.setProperty("--book-sticker-rot", (placement.rot || 0) + "deg");
+    if (placement.kind === "emoji") visual.textContent = placement.emoji;
+    else {
+      visual.alt = "";
+      setImgFromBlob(visual, sticker.blob);
+    }
+    bookStickerLayer.appendChild(visual);
   });
 }
 
@@ -2363,7 +2460,25 @@ function setDiaryMood(mood) {
   if (!currentDiaryDraft) return;
   currentDiaryDraft.mood = mood;
   editorMoodRow.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.mood === mood));
+  renderDiaryStickerPicker();
   scheduleDiaryAutosave();
+}
+
+function setDiaryTemplate(templateId, options = {}) {
+  if (!currentDiaryDraft) return;
+  const id = DIARY_TEMPLATES[templateId] ? templateId : "daily";
+  const template = DIARY_TEMPLATES[id];
+  currentDiaryDraft.templateId = id;
+  diaryPaper.dataset.template = id;
+  diaryTemplateBadge.textContent = template.badge;
+  diaryTitleInput.placeholder = template.titlePlaceholder;
+  diaryNoteInput.placeholder = template.notePlaceholder;
+  diaryTemplatePanel.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.diaryTemplate === id));
+  if (options.seedContent !== false && template.seed && !diaryNoteInput.value.trim()) {
+    currentDiaryDraft.note = template.seed;
+    diaryNoteInput.value = template.seed;
+  }
+  if (options.save !== false) scheduleDiaryAutosave();
 }
 
 function setDiaryPaperTheme(theme) {
@@ -2387,12 +2502,28 @@ function renderDiaryPhoto() {
 async function renderDiaryStickerPicker() {
   const stickers = await getAllStickers();
   diaryStickerPicker.innerHTML = "";
+  const recommendation = MOOD_STICKER_RECOMMENDATIONS[(currentDiaryDraft && currentDiaryDraft.mood) || "happy"];
+  const recommendLabel = document.createElement("span");
+  recommendLabel.className = "picker-section-label";
+  recommendLabel.textContent = "오늘의 추천";
+  diaryStickerPicker.appendChild(recommendLabel);
+  recommendation.stickers.forEach((emoji) => {
+    const button = document.createElement("button");
+    button.className = "diary-emoji-picker";
+    button.textContent = emoji;
+    button.addEventListener("click", () => addEmojiStickerToDiary(emoji));
+    diaryStickerPicker.appendChild(button);
+  });
   if (!stickers.length) {
     const empty = document.createElement("p");
-    empty.textContent = "스티커북이 비어 있어요. 먼저 사진 스티커를 만들어보세요!";
+    empty.textContent = "내 사진 스티커도 만들어보세요!";
     diaryStickerPicker.appendChild(empty);
     return;
   }
+  const myLabel = document.createElement("span");
+  myLabel.className = "picker-section-label";
+  myLabel.textContent = "내 스티커";
+  diaryStickerPicker.appendChild(myLabel);
   stickers.forEach((sticker) => {
     const button = document.createElement("button");
     button.className = "diary-picker-sticker";
@@ -2421,12 +2552,29 @@ function addStickerToDiary(stickerId) {
   toast("페이지에 스티커를 붙였어요 ♡");
 }
 
+function addEmojiStickerToDiary(emoji) {
+  if (!currentDiaryDraft) return;
+  const index = currentDiaryDraft.stickers.length;
+  currentDiaryDraft.stickers.push({
+    placementId: "e_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+    kind: "emoji",
+    emoji,
+    x: 72 - (index % 3) * 15,
+    y: 24 + (index % 4) * 14,
+    size: 68,
+    rot: -10 + (index % 4) * 7,
+  });
+  renderDiaryStickerLayer();
+  scheduleDiaryAutosave();
+  toast(emoji + " 스티커를 붙였어요");
+}
+
 async function renderDiaryStickerLayer() {
   if (!currentDiaryDraft) return;
   const stickers = await getAllStickers();
   const stickerMap = new Map(stickers.map((item) => [item.id, item]));
   diaryStickerLayer.innerHTML = "";
-  currentDiaryDraft.stickers = (currentDiaryDraft.stickers || []).filter((placement) => stickerMap.has(placement.stickerId));
+  currentDiaryDraft.stickers = (currentDiaryDraft.stickers || []).filter((placement) => placement.kind === "emoji" || stickerMap.has(placement.stickerId));
   currentDiaryDraft.stickers.forEach((placement) => {
     const item = stickerMap.get(placement.stickerId);
     const element = document.createElement("button");
@@ -2437,9 +2585,14 @@ async function renderDiaryStickerLayer() {
     element.style.setProperty("--diary-sticker-size", (placement.size || 76) + "px");
     element.style.setProperty("--diary-sticker-rot", (placement.rot || 0) + "deg");
     element.setAttribute("aria-label", "다이어리 스티커. 드래그해서 이동");
-    const img = document.createElement("img");
-    setImgFromBlob(img, item.blob);
-    img.alt = "";
+    const visual = document.createElement(placement.kind === "emoji" ? "span" : "img");
+    if (placement.kind === "emoji") {
+      visual.className = "diary-emoji-glyph";
+      visual.textContent = placement.emoji;
+    } else {
+      setImgFromBlob(visual, item.blob);
+      visual.alt = "";
+    }
     const remove = document.createElement("span");
     remove.className = "diary-sticker-remove";
     remove.textContent = "×";
@@ -2457,7 +2610,7 @@ async function renderDiaryStickerLayer() {
       event.stopPropagation();
       beginDiaryStickerTransform(event, element, placement, transformHandle);
     });
-    element.append(img, remove, transformHandle);
+    element.append(visual, remove, transformHandle);
     element.addEventListener("pointerdown", (event) => beginDiaryStickerDrag(event, element, placement));
     diaryStickerLayer.appendChild(element);
   });
@@ -2552,7 +2705,7 @@ async function persistDiaryDraft() {
   }
 }
 
-async function openDiaryEditor(dateKey, stickerId) {
+async function openDiaryEditor(dateKey, stickerId, templateId) {
   stopCamera();
   const saved = await getDiaryByDate(dateKey);
   const base = saved || createDiaryDraft(dateKey);
@@ -2560,20 +2713,26 @@ async function openDiaryEditor(dateKey, stickerId) {
     ...base,
     stickers: (base.stickers || []).map((item) => ({ ...item })),
   };
+  const previousTemplate = currentDiaryDraft.templateId || "daily";
   if (stickerId) addStickerToDiary(stickerId);
   diaryEditorDate.textContent = formatDiaryDate(dateKey);
   diaryTitleInput.value = currentDiaryDraft.title || "";
   diaryNoteInput.value = currentDiaryDraft.note || "";
   diaryPaper.dataset.paperTheme = currentDiaryDraft.paperTheme || "lavender";
+  setDiaryTemplate(templateId || previousTemplate, { seedContent: !!templateId, save: false });
   editorMoodRow.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.mood === currentDiaryDraft.mood));
   diaryThemePanel.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.paperTheme === currentDiaryDraft.paperTheme));
   selectedDiaryStickerId = null;
+  diaryToolBtns.forEach((button) => button.classList.toggle("active", button.dataset.diaryTool === "template"));
+  diaryTemplatePanel.classList.add("active");
+  diaryThemePanel.classList.remove("active");
+  diaryStickerPicker.classList.remove("active");
   renderDiaryPhoto();
   await Promise.all([renderDiaryStickerPicker(), renderDiaryStickerLayer()]);
   diarySaveState.textContent = saved ? "기기에 저장됨" : "새 페이지";
   diaryEditor.classList.add("active");
   diaryEditor.setAttribute("aria-hidden", "false");
-  if (stickerId) scheduleDiaryAutosave();
+  if (stickerId || (templateId && templateId !== previousTemplate)) scheduleDiaryAutosave();
 }
 
 async function closeDiaryEditor(destination) {
@@ -2585,6 +2744,7 @@ async function closeDiaryEditor(destination) {
 }
 
 editorMoodRow.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryMood(button.dataset.mood)));
+diaryTemplatePanel.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryTemplate(button.dataset.diaryTemplate)));
 diaryThemePanel.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryPaperTheme(button.dataset.paperTheme)));
 diaryTitleInput.addEventListener("input", () => { if (currentDiaryDraft) { currentDiaryDraft.title = diaryTitleInput.value; scheduleDiaryAutosave(); } });
 diaryNoteInput.addEventListener("input", () => { if (currentDiaryDraft) { currentDiaryDraft.note = diaryNoteInput.value; scheduleDiaryAutosave(); } });
@@ -2612,6 +2772,7 @@ diaryToolBtns.forEach((button) => {
   button.addEventListener("click", () => {
     const tool = button.dataset.diaryTool;
     diaryToolBtns.forEach((item) => item.classList.toggle("active", item === button));
+    diaryTemplatePanel.classList.toggle("active", tool === "template");
     diaryThemePanel.classList.toggle("active", tool === "theme");
     diaryStickerPicker.classList.toggle("active", tool === "sticker");
     if (tool === "photo") diaryPhotoInput.click();

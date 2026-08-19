@@ -38,6 +38,10 @@
           <button data-mood="tired" aria-label="피곤해요">😴<span>피곤</span></button>
           <button data-mood="sad" aria-label="속상해요">🥺<span>속상</span></button>
         </div>
+        <div class="mood-sticker-recommendation" id="mood-sticker-recommendation" aria-live="polite">
+          <div><span id="mood-sticker-title">기분을 골라보세요</span><small>오늘과 어울리는 스티커를 추천해드려요</small></div>
+          <div class="mood-sticker-list" id="mood-sticker-list"></div>
+        </div>
       </article>
 
       <article class="prompt-card">
@@ -179,7 +183,7 @@
           <div class="book-page" id="book-page">
             <div class="book-page-content" id="book-page-content">
               <div class="book-page-heading">
-                <div><p id="book-entry-date">오늘의 페이지</p><h2 id="book-entry-title">아직 비어 있어요</h2></div>
+                <div><small id="book-template-label">MY DAILY</small><p id="book-entry-date">오늘의 페이지</p><h2 id="book-entry-title">아직 비어 있어요</h2></div>
                 <span id="book-entry-mood">✨</span>
               </div>
               <div class="book-photo hidden" id="book-photo"><img id="book-photo-img" alt="다이어리 사진" /></div>
@@ -271,6 +275,17 @@
     <p class="card-kicker">CREATE SOMETHING</p>
     <h2>오늘 무엇을 만들까요?</h2>
     <button class="create-choice primary" id="create-diary-btn"><span>📔</span><div><strong>오늘의 다이어리</strong><small>사진과 스티커로 하루 꾸미기</small></div><b>→</b></button>
+    <div class="quick-template-wrap">
+      <p>어떤 다이어리를 쓸까요?</p>
+      <div class="quick-template-row" id="quick-template-row">
+        <button data-create-template="daily"><span>✦</span>데일리</button>
+        <button data-create-template="photo"><span>📷</span>포토</button>
+        <button data-create-template="gratitude"><span>💌</span>감사</button>
+        <button data-create-template="school"><span>✏️</span>학교</button>
+        <button data-create-template="travel"><span>🧳</span>여행</button>
+        <button data-create-template="mood"><span>🌈</span>무드</button>
+      </div>
+    </div>
     <button class="create-choice" id="create-sticker-btn"><span>✂️</span><div><strong>사진 스티커</strong><small>내 사진을 오려 스티커 만들기</small></div><b>→</b></button>
     <button class="create-choice" id="quick-photo-btn"><span>📷</span><div><strong>빠른 사진 기록</strong><small>사진 한 장으로 바로 시작하기</small></div><b>→</b></button>
   </div>
@@ -290,6 +305,7 @@
     </div>
     <main class="diary-paper" id="diary-paper" data-paper-theme="lavender">
       <span class="paper-ring ring-one" aria-hidden="true"></span><span class="paper-ring ring-two" aria-hidden="true"></span>
+      <div class="diary-template-badge" id="diary-template-badge">MY DAILY</div>
       <input id="diary-title-input" maxlength="40" placeholder="오늘의 제목" />
       <div class="diary-photo-frame hidden" id="diary-photo-frame"><img id="diary-photo-preview" alt="다이어리 사진" /><button id="diary-photo-remove" aria-label="사진 삭제">×</button></div>
       <textarea id="diary-note-input" maxlength="600" placeholder="오늘의 이야기를 적어보세요…"></textarea>
@@ -298,7 +314,15 @@
     </main>
   </div>
   <div class="diary-tool-panel">
-    <div class="diary-tool-content active" id="diary-theme-panel">
+    <div class="diary-tool-content diary-template-panel active" id="diary-template-panel">
+      <button data-diary-template="daily" class="active"><i>✦</i>데일리</button>
+      <button data-diary-template="photo"><i>📷</i>포토</button>
+      <button data-diary-template="gratitude"><i>💌</i>감사</button>
+      <button data-diary-template="school"><i>✏️</i>학교</button>
+      <button data-diary-template="travel"><i>🧳</i>여행</button>
+      <button data-diary-template="mood"><i>🌈</i>무드</button>
+    </div>
+    <div class="diary-tool-content" id="diary-theme-panel">
       <button data-paper-theme="lavender" class="active"><i class="paper-swatch lavender"></i>라벤더</button>
       <button data-paper-theme="pink"><i class="paper-swatch pink"></i>핑크</button>
       <button data-paper-theme="blue"><i class="paper-swatch blue"></i>블루</button>
@@ -307,7 +331,8 @@
     </div>
     <div class="diary-tool-content" id="diary-sticker-picker"><p>스티커북이 비어 있어요. 먼저 사진 스티커를 만들어보세요!</p></div>
     <nav class="diary-tools">
-      <button data-diary-tool="theme" class="active"><span>▧</span>배경</button>
+      <button data-diary-tool="template" class="active"><span>▤</span>종류</button>
+      <button data-diary-tool="theme"><span>▧</span>배경</button>
       <button data-diary-tool="photo"><span>▣</span>사진</button>
       <button data-diary-tool="sticker"><span>♡</span>스티커</button>
       <button data-diary-tool="text"><span>Aa</span>글자</button>
