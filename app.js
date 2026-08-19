@@ -1,6 +1,6 @@
 // ===== 찍스티커 (ZzikSticker) - main app logic =====
 
-const BUILD_ID = "build-2026-08-20-09-recommend";
+const BUILD_ID = "build-2026-08-20-10-text";
 console.log("[찍스티커]", BUILD_ID);
 window.addEventListener("DOMContentLoaded", () => {
   const badge = document.getElementById("build-badge");
@@ -115,6 +115,14 @@ const diaryTemplatePanel = $("diary-template-panel");
 const diaryTemplateBadge = $("diary-template-badge");
 const diaryThemePanel = $("diary-theme-panel");
 const diaryStickerPicker = $("diary-sticker-picker");
+const diaryTextPanel = $("diary-text-panel");
+const textStickerInput = $("text-sticker-input");
+const textStickerAddBtn = $("text-sticker-add-btn");
+const textFontOptions = $("text-font-options");
+const textSizeRange = $("text-size-range");
+const textSizeOutput = $("text-size-output");
+const textColorInput = $("text-color-input");
+const textShapeOptions = $("text-shape-options");
 const diaryToolBtns = document.querySelectorAll(".diary-tools button");
 
 const myDiaryName = $("my-diary-name");
@@ -2423,14 +2431,24 @@ async function renderDiaryBookPage() {
   bookStickerLayer.innerHTML = "";
   (entry.stickers || []).forEach((placement) => {
     const sticker = stickerMap.get(placement.stickerId);
-    if (placement.kind !== "emoji" && !sticker) return;
-    const visual = document.createElement(placement.kind === "emoji" ? "span" : "img");
-    visual.className = "book-sticker" + (placement.kind === "emoji" ? " book-emoji-sticker" : "");
+    if (placement.kind !== "emoji" && placement.kind !== "text" && !sticker) return;
+    const visual = document.createElement(placement.kind === "emoji" || placement.kind === "text" ? "span" : "img");
+    visual.className = "book-sticker";
+    if (placement.kind === "emoji") visual.classList.add("book-emoji-sticker");
+    if (placement.kind === "text") {
+      visual.classList.add("book-text-sticker", "text-font-" + (placement.font || "rounded"), "text-shape-" + (placement.shape || "plain"));
+    }
     visual.style.left = placement.x + "%";
     visual.style.top = placement.y + "%";
     visual.style.setProperty("--book-sticker-size", Math.max(34, (placement.size || 76) * 0.72) + "px");
     visual.style.setProperty("--book-sticker-rot", (placement.rot || 0) + "deg");
     if (placement.kind === "emoji") visual.textContent = placement.emoji;
+    else if (placement.kind === "text") {
+      visual.textContent = placement.text;
+      visual.style.setProperty("--book-text-size", Math.max(11, (placement.size || 28) * 0.72) + "px");
+      visual.style.setProperty("--diary-text-color", placement.color || "#5b426f");
+      visual.style.color = placement.color || "#5b426f";
+    }
     else {
       visual.alt = "";
       setImgFromBlob(visual, sticker.blob);
@@ -2569,12 +2587,81 @@ function addEmojiStickerToDiary(emoji) {
   toast(emoji + " 스티커를 붙였어요");
 }
 
+function activeTextOption(container, dataKey, fallback) {
+  const active = container.querySelector("button.active");
+  return active ? active.dataset[dataKey] : fallback;
+}
+
+function setActiveTextOption(container, dataKey, value) {
+  container.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset[dataKey] === value));
+}
+
+function selectedTextPlacement() {
+  if (!currentDiaryDraft || !selectedDiaryStickerId) return null;
+  const placement = currentDiaryDraft.stickers.find((item) => item.placementId === selectedDiaryStickerId);
+  return placement && placement.kind === "text" ? placement : null;
+}
+
+function syncTextControls(placement) {
+  if (!placement) {
+    textStickerInput.value = "";
+    textStickerAddBtn.textContent = "글자 붙이기";
+    return;
+  }
+  textStickerInput.value = placement.text || "";
+  textSizeRange.value = String(placement.size || 28);
+  textSizeOutput.textContent = textSizeRange.value;
+  textColorInput.value = placement.color || "#5b426f";
+  setActiveTextOption(textFontOptions, "textFont", placement.font || "rounded");
+  setActiveTextOption(textShapeOptions, "textShape", placement.shape || "plain");
+  textStickerAddBtn.textContent = "선택 글자 적용";
+}
+
+function addOrUpdateTextSticker() {
+  if (!currentDiaryDraft) return;
+  const text = textStickerInput.value.trim();
+  if (!text) {
+    toast("붙일 글자를 입력해주세요");
+    textStickerInput.focus();
+    return;
+  }
+  const style = {
+    text,
+    font: activeTextOption(textFontOptions, "textFont", "rounded"),
+    shape: activeTextOption(textShapeOptions, "textShape", "plain"),
+    size: Number(textSizeRange.value) || 28,
+    color: textColorInput.value || "#5b426f",
+  };
+  const selected = selectedTextPlacement();
+  if (selected) {
+    Object.assign(selected, style);
+    renderDiaryStickerLayer().then(() => selectDiarySticker(selected.placementId));
+    toast("글자 스타일을 바꿨어요 ✨");
+  } else {
+    const index = currentDiaryDraft.stickers.length;
+    const placement = {
+      placementId: "t_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+      kind: "text",
+      ...style,
+      x: 50,
+      y: 35 + (index % 4) * 13,
+      rot: -4 + (index % 3) * 4,
+    };
+    currentDiaryDraft.stickers.push(placement);
+    selectedDiaryStickerId = null;
+    syncTextControls(null);
+    renderDiaryStickerLayer();
+    toast("글자를 스티커처럼 붙였어요 ♡");
+  }
+  scheduleDiaryAutosave();
+}
+
 async function renderDiaryStickerLayer() {
   if (!currentDiaryDraft) return;
   const stickers = await getAllStickers();
   const stickerMap = new Map(stickers.map((item) => [item.id, item]));
   diaryStickerLayer.innerHTML = "";
-  currentDiaryDraft.stickers = (currentDiaryDraft.stickers || []).filter((placement) => placement.kind === "emoji" || stickerMap.has(placement.stickerId));
+  currentDiaryDraft.stickers = (currentDiaryDraft.stickers || []).filter((placement) => placement.kind === "emoji" || placement.kind === "text" || stickerMap.has(placement.stickerId));
   currentDiaryDraft.stickers.forEach((placement) => {
     const item = stickerMap.get(placement.stickerId);
     const element = document.createElement("button");
@@ -2584,11 +2671,18 @@ async function renderDiaryStickerLayer() {
     element.style.top = placement.y + "%";
     element.style.setProperty("--diary-sticker-size", (placement.size || 76) + "px");
     element.style.setProperty("--diary-sticker-rot", (placement.rot || 0) + "deg");
-    element.setAttribute("aria-label", "다이어리 스티커. 드래그해서 이동");
-    const visual = document.createElement(placement.kind === "emoji" ? "span" : "img");
+    element.setAttribute("aria-label", placement.kind === "text" ? "글자 스티커. 드래그해서 이동" : "다이어리 스티커. 드래그해서 이동");
+    const visual = document.createElement(placement.kind === "emoji" || placement.kind === "text" ? "span" : "img");
     if (placement.kind === "emoji") {
       visual.className = "diary-emoji-glyph";
       visual.textContent = placement.emoji;
+    } else if (placement.kind === "text") {
+      element.classList.add("diary-text-sticker");
+      visual.className = "diary-text-glyph text-font-" + (placement.font || "rounded") + " text-shape-" + (placement.shape || "plain");
+      visual.textContent = placement.text;
+      element.style.setProperty("--diary-text-size", (placement.size || 28) + "px");
+      element.style.setProperty("--diary-text-color", placement.color || "#5b426f");
+      visual.style.color = placement.color || "#5b426f";
     } else {
       setImgFromBlob(visual, item.blob);
       visual.alt = "";
@@ -2600,6 +2694,8 @@ async function renderDiaryStickerLayer() {
     remove.addEventListener("click", (event) => {
       event.stopPropagation();
       currentDiaryDraft.stickers = currentDiaryDraft.stickers.filter((value) => value.placementId !== placement.placementId);
+      selectedDiaryStickerId = null;
+      syncTextControls(null);
       renderDiaryStickerLayer();
       scheduleDiaryAutosave();
     });
@@ -2626,15 +2722,18 @@ function beginDiaryStickerTransform(event, element, placement, handle) {
   const startAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI;
   const startSize = placement.size || 76;
   const startRotation = placement.rot || 0;
+  const minSize = placement.kind === "text" ? 14 : 44;
+  const maxSize = placement.kind === "text" ? 64 : 150;
   const pointerId = event.pointerId;
   handle.setPointerCapture(pointerId);
   const onMove = (moveEvent) => {
     if (moveEvent.pointerId !== pointerId) return;
     const distance = Math.max(1, Math.hypot(moveEvent.clientX - centerX, moveEvent.clientY - centerY));
     const angle = Math.atan2(moveEvent.clientY - centerY, moveEvent.clientX - centerX) * 180 / Math.PI;
-    placement.size = Math.max(44, Math.min(150, startSize * (distance / startDistance)));
+    placement.size = Math.max(minSize, Math.min(maxSize, startSize * (distance / startDistance)));
     placement.rot = startRotation + angle - startAngle;
-    element.style.setProperty("--diary-sticker-size", placement.size + "px");
+    if (placement.kind === "text") element.style.setProperty("--diary-text-size", placement.size + "px");
+    else element.style.setProperty("--diary-sticker-size", placement.size + "px");
     element.style.setProperty("--diary-sticker-rot", placement.rot + "deg");
   };
   const onEnd = (endEvent) => {
@@ -2642,6 +2741,7 @@ function beginDiaryStickerTransform(event, element, placement, handle) {
     handle.removeEventListener("pointermove", onMove);
     handle.removeEventListener("pointerup", onEnd);
     handle.removeEventListener("pointercancel", onEnd);
+    if (placement.kind === "text") syncTextControls(placement);
     scheduleDiaryAutosave();
   };
   handle.addEventListener("pointermove", onMove);
@@ -2652,6 +2752,7 @@ function beginDiaryStickerTransform(event, element, placement, handle) {
 function selectDiarySticker(placementId) {
   selectedDiaryStickerId = placementId;
   diaryStickerLayer.querySelectorAll(".diary-sticker").forEach((element) => element.classList.toggle("selected", element.dataset.placementId === placementId));
+  syncTextControls(selectedTextPlacement());
 }
 
 function beginDiaryStickerDrag(event, element, placement) {
@@ -2727,6 +2828,8 @@ async function openDiaryEditor(dateKey, stickerId, templateId) {
   diaryTemplatePanel.classList.add("active");
   diaryThemePanel.classList.remove("active");
   diaryStickerPicker.classList.remove("active");
+  diaryTextPanel.classList.remove("active");
+  syncTextControls(null);
   renderDiaryPhoto();
   await Promise.all([renderDiaryStickerPicker(), renderDiaryStickerLayer()]);
   diarySaveState.textContent = saved ? "기기에 저장됨" : "새 페이지";
@@ -2746,6 +2849,20 @@ async function closeDiaryEditor(destination) {
 editorMoodRow.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryMood(button.dataset.mood)));
 diaryTemplatePanel.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryTemplate(button.dataset.diaryTemplate)));
 diaryThemePanel.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryPaperTheme(button.dataset.paperTheme)));
+textFontOptions.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", () => setActiveTextOption(textFontOptions, "textFont", button.dataset.textFont));
+});
+textShapeOptions.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", () => setActiveTextOption(textShapeOptions, "textShape", button.dataset.textShape));
+});
+textSizeRange.addEventListener("input", () => { textSizeOutput.textContent = textSizeRange.value; });
+textStickerAddBtn.addEventListener("click", addOrUpdateTextSticker);
+textStickerInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addOrUpdateTextSticker();
+  }
+});
 diaryTitleInput.addEventListener("input", () => { if (currentDiaryDraft) { currentDiaryDraft.title = diaryTitleInput.value; scheduleDiaryAutosave(); } });
 diaryNoteInput.addEventListener("input", () => { if (currentDiaryDraft) { currentDiaryDraft.note = diaryNoteInput.value; scheduleDiaryAutosave(); } });
 diaryPhotoInput.addEventListener("change", async () => {
@@ -2775,8 +2892,9 @@ diaryToolBtns.forEach((button) => {
     diaryTemplatePanel.classList.toggle("active", tool === "template");
     diaryThemePanel.classList.toggle("active", tool === "theme");
     diaryStickerPicker.classList.toggle("active", tool === "sticker");
+    diaryTextPanel.classList.toggle("active", tool === "text");
     if (tool === "photo") diaryPhotoInput.click();
-    if (tool === "text") diaryNoteInput.focus();
+    if (tool === "text") textStickerInput.focus();
   });
 });
 

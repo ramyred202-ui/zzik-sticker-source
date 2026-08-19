@@ -330,6 +330,36 @@
       <button data-paper-theme="night"><i class="paper-swatch night"></i>나이트</button>
     </div>
     <div class="diary-tool-content" id="diary-sticker-picker"><p>스티커북이 비어 있어요. 먼저 사진 스티커를 만들어보세요!</p></div>
+    <div class="diary-tool-content diary-text-panel" id="diary-text-panel">
+      <div class="text-sticker-compose">
+        <input type="text" id="text-sticker-input" maxlength="40" placeholder="붙이고 싶은 글자를 입력하세요" />
+        <button id="text-sticker-add-btn">글자 붙이기</button>
+      </div>
+      <div class="text-style-section">
+        <span>글자 모양</span>
+        <div class="text-font-options" id="text-font-options">
+          <button class="active" data-text-font="rounded">둥근</button>
+          <button data-text-font="hand">손글씨</button>
+          <button data-text-font="bold">굵게</button>
+          <button data-text-font="serif">세리프</button>
+        </div>
+      </div>
+      <div class="text-style-section text-size-section">
+        <label for="text-size-range">크기 <output id="text-size-output">28</output></label>
+        <input type="range" id="text-size-range" min="14" max="64" value="28" />
+        <label class="text-color-label" aria-label="글자 색"><input type="color" id="text-color-input" value="#5b426f" /></label>
+      </div>
+      <div class="text-style-section">
+        <span>스티커 모양</span>
+        <div class="text-shape-options" id="text-shape-options">
+          <button class="active" data-text-shape="plain">글자</button>
+          <button data-text-shape="label">라벨</button>
+          <button data-text-shape="bubble">말풍선</button>
+          <button data-text-shape="tape">테이프</button>
+          <button data-text-shape="neon">네온</button>
+        </div>
+      </div>
+    </div>
     <nav class="diary-tools">
       <button data-diary-tool="template" class="active"><span>▤</span>종류</button>
       <button data-diary-tool="theme"><span>▧</span>배경</button>
