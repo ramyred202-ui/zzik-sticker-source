@@ -1,6 +1,6 @@
 // ===== 찍스티커 (ZzikSticker) - main app logic =====
 
-const BUILD_ID = "build-2026-08-19-06";
+const BUILD_ID = "build-2026-08-19-07-diary";
 console.log("[찍스티커]", BUILD_ID);
 window.addEventListener("DOMContentLoaded", () => {
   const badge = document.getElementById("build-badge");
@@ -26,6 +26,7 @@ const progressFill = $("progress-fill");
 const retakeBtn = $("retake-btn");
 const removeBgBtn = $("remove-bg-btn");
 const saveStickerBtn = $("save-sticker-btn");
+const saveStickerOnlyBtn = $("save-sticker-only-btn");
 const selectHint = $("select-hint");
 const selectLasso = $("select-lasso");
 const lassoCtx = selectLasso.getContext("2d");
@@ -78,6 +79,47 @@ const daySheetTitle = $("day-sheet-title");
 const daySheetGrid = $("day-sheet-grid");
 const daySheetClose = $("day-sheet-close");
 
+const todayDateLabel = $("today-date-label");
+const todayMoodPicker = $("today-mood-picker");
+const todayWriteBtn = $("today-write-btn");
+const emptyWriteBtn = $("empty-write-btn");
+const todaySeeAll = $("today-see-all");
+const todaySettingsBtn = $("today-settings-btn");
+const recentDiaryList = $("recent-diary-list");
+const recentDiaryEmpty = $("recent-diary-empty");
+const createSheet = $("create-sheet");
+const createSheetBackdrop = $("create-sheet-backdrop");
+const navCreateBtn = $("nav-create-btn");
+const createDiaryBtn = $("create-diary-btn");
+const createStickerBtn = $("create-sticker-btn");
+const quickPhotoBtn = $("quick-photo-btn");
+
+const diaryEditor = $("diary-editor");
+const diaryEditorClose = $("diary-editor-close");
+const diaryEditorDate = $("diary-editor-date");
+const diarySaveState = $("diary-save-state");
+const diarySaveBtn = $("diary-save-btn");
+const editorMoodRow = $("editor-mood-row");
+const diaryPaper = $("diary-paper");
+const diaryTitleInput = $("diary-title-input");
+const diaryNoteInput = $("diary-note-input");
+const diaryPhotoInput = $("diary-photo-input");
+const diaryPhotoFrame = $("diary-photo-frame");
+const diaryPhotoPreview = $("diary-photo-preview");
+const diaryPhotoRemove = $("diary-photo-remove");
+const diaryStickerLayer = $("diary-sticker-layer");
+const diaryThemePanel = $("diary-theme-panel");
+const diaryStickerPicker = $("diary-sticker-picker");
+const diaryToolBtns = document.querySelectorAll(".diary-tools button");
+
+const myDiaryName = $("my-diary-name");
+const myNameEdit = $("my-name-edit");
+const appThemeGrid = $("app-theme-grid");
+const myEntryCount = $("my-entry-count");
+const myStickerCount = $("my-sticker-count");
+const monthEntryCount = $("month-entry-count");
+const monthMoodSummary = $("month-mood-summary");
+
 const toastEl = $("toast");
 const navBtns = document.querySelectorAll(".nav-btn");
 const views = document.querySelectorAll(".view");
@@ -103,10 +145,12 @@ function showView(id) {
   else stopCamera();
   if (id === "gallery-view") renderGallery();
   if (id === "calendar-view") renderCalendar();
+  if (id === "today-view") renderToday();
+  if (id === "my-view") renderMyPage();
 }
 
 navBtns.forEach((btn) => {
-  btn.addEventListener("click", () => showView(btn.dataset.tab));
+  if (btn.dataset.tab) btn.addEventListener("click", () => showView(btn.dataset.tab));
 });
 
 // ================= Toast =================
@@ -248,6 +292,7 @@ function openReview(blob) {
   resultImg.classList.add("hidden");
   removeBgBtn.classList.remove("hidden");
   saveStickerBtn.classList.add("hidden");
+  saveStickerOnlyBtn.classList.add("hidden");
   selectHint.classList.remove("hidden");
   selectLasso.classList.remove("active");
   lassoCtx.clearRect(0, 0, selectLasso.width, selectLasso.height);
@@ -324,6 +369,7 @@ function showResult(blob) {
   resultImg.classList.remove("hidden");
   removeBgBtn.classList.add("hidden");
   saveStickerBtn.classList.remove("hidden");
+  saveStickerOnlyBtn.classList.remove("hidden");
   selectHint.classList.add("hidden");
 }
 
@@ -576,8 +622,22 @@ previewImg.addEventListener("contextmenu", (e) => e.preventDefault());
 saveStickerBtn.addEventListener("click", async () => {
   if (!resultBlob) return;
   try {
+    const record = await saveSticker(resultBlob);
+    resultBlob = null;
+    toast("스티커를 만들었어요! 다이어리에 붙여볼까요? ✨");
+    await openDiaryEditor(toDateKey(new Date()), record.id);
+  } catch (err) {
+    console.error(err);
+    toast("저장에 실패했어요 😢");
+  }
+});
+
+saveStickerOnlyBtn.addEventListener("click", async () => {
+  if (!resultBlob) return;
+  try {
     await saveSticker(resultBlob);
-    toast("저장했어요! 🎉");
+    resultBlob = null;
+    toast("스티커북에 저장했어요! 🎀");
     showView("gallery-view");
   } catch (err) {
     console.error(err);
@@ -588,17 +648,23 @@ saveStickerBtn.addEventListener("click", async () => {
 // ================= IndexedDB storage =================
 const DB_NAME = "zziksticker-db";
 const STORE_NAME = "stickers";
+const DIARY_STORE_NAME = "diaryEntries";
 let dbPromise = null;
 
 function getDB() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
         store.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(DIARY_STORE_NAME)) {
+        const diaryStore = db.createObjectStore(DIARY_STORE_NAME, { keyPath: "id" });
+        diaryStore.createIndex("dateKey", "dateKey", { unique: true });
+        diaryStore.createIndex("updatedAt", "updatedAt");
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -716,7 +782,7 @@ async function deleteSticker(id) {
 const PROFILE_KEY = "zzik-profile-name";
 function loadProfileName() {
   const saved = localStorage.getItem(PROFILE_KEY);
-  profileName.textContent = saved || "동민의 냉장고";
+  profileName.textContent = saved || "나의 스티커북";
 }
 profileAvatar.addEventListener("click", () => {
   const current = localStorage.getItem(PROFILE_KEY) || "";
@@ -1597,7 +1663,8 @@ lightboxPlace.addEventListener("click", async () => {
   lightbox.classList.remove("active");
   setGalleryMode("board");
   await renderGallery();
-  toast("냉장고에 붙였어요 🧲");
+  const surfaceName = SURFACE_LABELS[galleryView.dataset.surface] || "보드";
+  toast(surfaceName + "에 붙였어요 🧲");
 });
 
 // ================= Board gestures: long-press to pick up, drag to move, corner handle to resize =================
@@ -1975,15 +2042,486 @@ lightboxShare.addEventListener("click", async () => {
   toast("사진 앱에 저장해주세요 (다운로드됨)");
 });
 
+// ================= Memory diary =================
+const MOOD_EMOJI = {
+  excited: "🤩",
+  happy: "🥰",
+  calm: "😌",
+  tired: "😴",
+  sad: "🥺",
+};
+const DIARY_NAME_KEY = "zzik-diary-name";
+const APP_THEME_KEY = "zzik-app-theme";
+const TODAY_PROMPTS = [
+  "오늘 가장 웃겼던 일은 뭐였나요?",
+  "오늘 꼭 기억하고 싶은 순간은?",
+  "오늘 나를 기분 좋게 한 한마디는?",
+  "지금 제일 고마운 사람은 누구인가요?",
+  "오늘의 나에게 작은 칭찬을 해준다면?",
+  "오늘 사진으로 남기고 싶은 장면은?",
+  "내일의 나에게 한마디를 남겨볼까요?",
+];
+
+let currentDiaryDraft = null;
+let diaryAutosaveTimer = null;
+let diaryPhotoUrl = null;
+let selectedDiaryStickerId = null;
+
+function diaryIdForDate(dateKey) {
+  return "d_" + dateKey;
+}
+
+function localDateFromKey(dateKey) {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDiaryDate(dateKey, includeYear = false) {
+  const date = localDateFromKey(dateKey);
+  const weekday = WEEKDAY_LABELS[date.getDay()];
+  return (includeYear ? date.getFullYear() + "년 " : "") + (date.getMonth() + 1) + "월 " + date.getDate() + "일 " + weekday + "요일";
+}
+
+function createDiaryDraft(dateKey) {
+  const now = Date.now();
+  return {
+    id: diaryIdForDate(dateKey),
+    dateKey,
+    title: "",
+    note: "",
+    mood: "",
+    paperTheme: "lavender",
+    photoBlob: null,
+    stickers: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+async function getAllDiaryEntries() {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DIARY_STORE_NAME, "readonly");
+    const req = tx.objectStore(DIARY_STORE_NAME).getAll();
+    req.onsuccess = () => {
+      const entries = req.result || [];
+      entries.sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+      resolve(entries);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getDiaryByDate(dateKey) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DIARY_STORE_NAME, "readonly");
+    const req = tx.objectStore(DIARY_STORE_NAME).get(diaryIdForDate(dateKey));
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function putDiaryEntry(entry) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DIARY_STORE_NAME, "readwrite");
+    tx.objectStore(DIARY_STORE_NAME).put(entry);
+    tx.oncomplete = () => resolve(entry);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function entryHasContent(entry) {
+  return !!(entry && (entry.title || entry.note || entry.mood || entry.photoBlob || (entry.stickers && entry.stickers.length)));
+}
+
+function makeDiaryPreview(entry) {
+  const button = document.createElement("button");
+  button.className = "memory-preview";
+  button.dataset.theme = entry.paperTheme || "lavender";
+  const paper = document.createElement("div");
+  paper.className = "preview-paper";
+  const mood = document.createElement("span");
+  mood.className = "preview-mood";
+  mood.textContent = MOOD_EMOJI[entry.mood] || "✨";
+  const title = document.createElement("strong");
+  title.textContent = entry.title || "나의 하루";
+  const note = document.createElement("p");
+  note.textContent = entry.note || "사진과 스티커로 남긴 소중한 기억";
+  paper.append(mood, title, note);
+  const date = document.createElement("small");
+  date.textContent = formatDiaryDate(entry.dateKey);
+  button.append(paper, date);
+  button.addEventListener("click", () => openDiaryEditor(entry.dateKey));
+  return button;
+}
+
+async function renderToday() {
+  const now = new Date();
+  const todayKey = toDateKey(now);
+  todayDateLabel.textContent = formatDiaryDate(todayKey, true);
+  $("today-prompt").textContent = TODAY_PROMPTS[now.getDay() % TODAY_PROMPTS.length];
+  const entries = (await getAllDiaryEntries()).filter(entryHasContent);
+  recentDiaryList.innerHTML = "";
+  entries.slice(0, 4).forEach((entry) => recentDiaryList.appendChild(makeDiaryPreview(entry)));
+  recentDiaryEmpty.classList.toggle("hidden", entries.length > 0);
+  recentDiaryList.classList.toggle("hidden", entries.length === 0);
+  const todayEntry = entries.find((entry) => entry.dateKey === todayKey);
+  todayMoodPicker.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("active", !!todayEntry && button.dataset.mood === todayEntry.mood);
+  });
+}
+
+async function renderMyPage() {
+  const [entries, stickers] = await Promise.all([getAllDiaryEntries(), getAllStickers()]);
+  myDiaryName.textContent = localStorage.getItem(DIARY_NAME_KEY) || "나의 반짝 다이어리";
+  myEntryCount.textContent = entries.filter(entryHasContent).length;
+  myStickerCount.textContent = stickers.length;
+}
+
+function applyAppTheme(theme) {
+  const valid = ["pastel", "highteen", "y2k", "vintage"];
+  const selected = valid.includes(theme) ? theme : "pastel";
+  document.body.dataset.appTheme = selected;
+  localStorage.setItem(APP_THEME_KEY, selected);
+  appThemeGrid.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.appTheme === selected));
+}
+
+function openCreateSheet() {
+  createSheet.classList.add("active");
+  createSheet.setAttribute("aria-hidden", "false");
+}
+
+function closeCreateSheet() {
+  createSheet.classList.remove("active");
+  createSheet.setAttribute("aria-hidden", "true");
+}
+
+navCreateBtn.addEventListener("click", openCreateSheet);
+createSheetBackdrop.addEventListener("click", closeCreateSheet);
+createDiaryBtn.addEventListener("click", () => {
+  closeCreateSheet();
+  openDiaryEditor(toDateKey(new Date()));
+});
+createStickerBtn.addEventListener("click", () => {
+  closeCreateSheet();
+  showView("camera-view");
+});
+quickPhotoBtn.addEventListener("click", () => {
+  closeCreateSheet();
+  diaryPhotoInput.click();
+});
+todayWriteBtn.addEventListener("click", () => openDiaryEditor(toDateKey(new Date())));
+emptyWriteBtn.addEventListener("click", () => openDiaryEditor(toDateKey(new Date())));
+todaySeeAll.addEventListener("click", () => showView("calendar-view"));
+todaySettingsBtn.addEventListener("click", () => showView("my-view"));
+
+todayMoodPicker.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", async () => {
+    await openDiaryEditor(toDateKey(new Date()));
+    setDiaryMood(button.dataset.mood);
+  });
+});
+
+myNameEdit.addEventListener("click", () => {
+  const current = localStorage.getItem(DIARY_NAME_KEY) || "나의 반짝 다이어리";
+  const next = window.prompt("다이어리 이름을 입력해주세요", current);
+  if (next === null) return;
+  const name = next.trim().slice(0, 30) || "나의 반짝 다이어리";
+  localStorage.setItem(DIARY_NAME_KEY, name);
+  myDiaryName.textContent = name;
+});
+
+appThemeGrid.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", () => applyAppTheme(button.dataset.appTheme));
+});
+applyAppTheme(localStorage.getItem(APP_THEME_KEY) || "pastel");
+
+function setDiaryMood(mood) {
+  if (!currentDiaryDraft) return;
+  currentDiaryDraft.mood = mood;
+  editorMoodRow.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.mood === mood));
+  scheduleDiaryAutosave();
+}
+
+function setDiaryPaperTheme(theme) {
+  if (!currentDiaryDraft) return;
+  currentDiaryDraft.paperTheme = theme;
+  diaryPaper.dataset.paperTheme = theme;
+  diaryThemePanel.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.paperTheme === theme));
+  scheduleDiaryAutosave();
+}
+
+function renderDiaryPhoto() {
+  if (diaryPhotoUrl) {
+    URL.revokeObjectURL(diaryPhotoUrl);
+    diaryPhotoUrl = null;
+  }
+  const blob = currentDiaryDraft && currentDiaryDraft.photoBlob;
+  diaryPhotoFrame.classList.toggle("hidden", !blob);
+  if (blob) diaryPhotoUrl = setImgFromBlob(diaryPhotoPreview, blob);
+}
+
+async function renderDiaryStickerPicker() {
+  const stickers = await getAllStickers();
+  diaryStickerPicker.innerHTML = "";
+  if (!stickers.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "스티커북이 비어 있어요. 먼저 사진 스티커를 만들어보세요!";
+    diaryStickerPicker.appendChild(empty);
+    return;
+  }
+  stickers.forEach((sticker) => {
+    const button = document.createElement("button");
+    button.className = "diary-picker-sticker";
+    const img = document.createElement("img");
+    setImgFromBlob(img, sticker.blob);
+    img.alt = "다이어리에 붙일 스티커";
+    button.appendChild(img);
+    button.addEventListener("click", () => addStickerToDiary(sticker.id));
+    diaryStickerPicker.appendChild(button);
+  });
+}
+
+function addStickerToDiary(stickerId) {
+  if (!currentDiaryDraft) return;
+  const index = currentDiaryDraft.stickers.length;
+  currentDiaryDraft.stickers.push({
+    placementId: "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+    stickerId,
+    x: 68 - (index % 3) * 14,
+    y: 28 + (index % 4) * 13,
+    size: 76,
+    rot: -8 + (index % 3) * 8,
+  });
+  renderDiaryStickerLayer();
+  scheduleDiaryAutosave();
+  toast("페이지에 스티커를 붙였어요 ♡");
+}
+
+async function renderDiaryStickerLayer() {
+  if (!currentDiaryDraft) return;
+  const stickers = await getAllStickers();
+  const stickerMap = new Map(stickers.map((item) => [item.id, item]));
+  diaryStickerLayer.innerHTML = "";
+  currentDiaryDraft.stickers = (currentDiaryDraft.stickers || []).filter((placement) => stickerMap.has(placement.stickerId));
+  currentDiaryDraft.stickers.forEach((placement) => {
+    const item = stickerMap.get(placement.stickerId);
+    const element = document.createElement("button");
+    element.className = "diary-sticker";
+    element.dataset.placementId = placement.placementId;
+    element.style.left = placement.x + "%";
+    element.style.top = placement.y + "%";
+    element.style.setProperty("--diary-sticker-size", (placement.size || 76) + "px");
+    element.style.setProperty("--diary-sticker-rot", (placement.rot || 0) + "deg");
+    element.setAttribute("aria-label", "다이어리 스티커. 드래그해서 이동");
+    const img = document.createElement("img");
+    setImgFromBlob(img, item.blob);
+    img.alt = "";
+    const remove = document.createElement("span");
+    remove.className = "diary-sticker-remove";
+    remove.textContent = "×";
+    remove.addEventListener("pointerdown", (event) => event.stopPropagation());
+    remove.addEventListener("click", (event) => {
+      event.stopPropagation();
+      currentDiaryDraft.stickers = currentDiaryDraft.stickers.filter((value) => value.placementId !== placement.placementId);
+      renderDiaryStickerLayer();
+      scheduleDiaryAutosave();
+    });
+    const transformHandle = document.createElement("span");
+    transformHandle.className = "diary-sticker-transform";
+    transformHandle.textContent = "↗";
+    transformHandle.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      beginDiaryStickerTransform(event, element, placement, transformHandle);
+    });
+    element.append(img, remove, transformHandle);
+    element.addEventListener("pointerdown", (event) => beginDiaryStickerDrag(event, element, placement));
+    diaryStickerLayer.appendChild(element);
+  });
+}
+
+function beginDiaryStickerTransform(event, element, placement, handle) {
+  event.preventDefault();
+  selectDiarySticker(placement.placementId);
+  const rect = element.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const startDistance = Math.max(1, Math.hypot(event.clientX - centerX, event.clientY - centerY));
+  const startAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI;
+  const startSize = placement.size || 76;
+  const startRotation = placement.rot || 0;
+  const pointerId = event.pointerId;
+  handle.setPointerCapture(pointerId);
+  const onMove = (moveEvent) => {
+    if (moveEvent.pointerId !== pointerId) return;
+    const distance = Math.max(1, Math.hypot(moveEvent.clientX - centerX, moveEvent.clientY - centerY));
+    const angle = Math.atan2(moveEvent.clientY - centerY, moveEvent.clientX - centerX) * 180 / Math.PI;
+    placement.size = Math.max(44, Math.min(150, startSize * (distance / startDistance)));
+    placement.rot = startRotation + angle - startAngle;
+    element.style.setProperty("--diary-sticker-size", placement.size + "px");
+    element.style.setProperty("--diary-sticker-rot", placement.rot + "deg");
+  };
+  const onEnd = (endEvent) => {
+    if (endEvent.pointerId !== pointerId) return;
+    handle.removeEventListener("pointermove", onMove);
+    handle.removeEventListener("pointerup", onEnd);
+    handle.removeEventListener("pointercancel", onEnd);
+    scheduleDiaryAutosave();
+  };
+  handle.addEventListener("pointermove", onMove);
+  handle.addEventListener("pointerup", onEnd);
+  handle.addEventListener("pointercancel", onEnd);
+}
+
+function selectDiarySticker(placementId) {
+  selectedDiaryStickerId = placementId;
+  diaryStickerLayer.querySelectorAll(".diary-sticker").forEach((element) => element.classList.toggle("selected", element.dataset.placementId === placementId));
+}
+
+function beginDiaryStickerDrag(event, element, placement) {
+  if (event.button != null && event.button !== 0) return;
+  event.preventDefault();
+  selectDiarySticker(placement.placementId);
+  const rect = diaryPaper.getBoundingClientRect();
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const originalX = placement.x;
+  const originalY = placement.y;
+  const pointerId = event.pointerId;
+  element.setPointerCapture(pointerId);
+  const onMove = (moveEvent) => {
+    if (moveEvent.pointerId !== pointerId) return;
+    placement.x = Math.max(5, Math.min(95, originalX + ((moveEvent.clientX - startX) / rect.width) * 100));
+    placement.y = Math.max(5, Math.min(95, originalY + ((moveEvent.clientY - startY) / rect.height) * 100));
+    element.style.left = placement.x + "%";
+    element.style.top = placement.y + "%";
+  };
+  const onEnd = (endEvent) => {
+    if (endEvent.pointerId !== pointerId) return;
+    element.removeEventListener("pointermove", onMove);
+    element.removeEventListener("pointerup", onEnd);
+    element.removeEventListener("pointercancel", onEnd);
+    scheduleDiaryAutosave();
+  };
+  element.addEventListener("pointermove", onMove);
+  element.addEventListener("pointerup", onEnd);
+  element.addEventListener("pointercancel", onEnd);
+}
+
+function scheduleDiaryAutosave() {
+  if (!currentDiaryDraft) return;
+  diarySaveState.textContent = "저장 중…";
+  clearTimeout(diaryAutosaveTimer);
+  diaryAutosaveTimer = setTimeout(() => persistDiaryDraft(), 650);
+}
+
+async function persistDiaryDraft() {
+  if (!currentDiaryDraft) return;
+  clearTimeout(diaryAutosaveTimer);
+  currentDiaryDraft.updatedAt = Date.now();
+  try {
+    await putDiaryEntry(currentDiaryDraft);
+    diarySaveState.textContent = "기기에 저장됨";
+  } catch (err) {
+    console.error("diary save failed", err);
+    diarySaveState.textContent = "저장 실패";
+    toast("다이어리 저장에 실패했어요", 4000);
+  }
+}
+
+async function openDiaryEditor(dateKey, stickerId) {
+  stopCamera();
+  const saved = await getDiaryByDate(dateKey);
+  const base = saved || createDiaryDraft(dateKey);
+  currentDiaryDraft = {
+    ...base,
+    stickers: (base.stickers || []).map((item) => ({ ...item })),
+  };
+  if (stickerId) addStickerToDiary(stickerId);
+  diaryEditorDate.textContent = formatDiaryDate(dateKey);
+  diaryTitleInput.value = currentDiaryDraft.title || "";
+  diaryNoteInput.value = currentDiaryDraft.note || "";
+  diaryPaper.dataset.paperTheme = currentDiaryDraft.paperTheme || "lavender";
+  editorMoodRow.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.mood === currentDiaryDraft.mood));
+  diaryThemePanel.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.paperTheme === currentDiaryDraft.paperTheme));
+  selectedDiaryStickerId = null;
+  renderDiaryPhoto();
+  await Promise.all([renderDiaryStickerPicker(), renderDiaryStickerLayer()]);
+  diarySaveState.textContent = saved ? "기기에 저장됨" : "새 페이지";
+  diaryEditor.classList.add("active");
+  diaryEditor.setAttribute("aria-hidden", "false");
+  if (stickerId) scheduleDiaryAutosave();
+}
+
+async function closeDiaryEditor(destination) {
+  await persistDiaryDraft();
+  diaryEditor.classList.remove("active");
+  diaryEditor.setAttribute("aria-hidden", "true");
+  currentDiaryDraft = null;
+  showView(destination || "today-view");
+}
+
+editorMoodRow.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryMood(button.dataset.mood)));
+diaryThemePanel.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => setDiaryPaperTheme(button.dataset.paperTheme)));
+diaryTitleInput.addEventListener("input", () => { if (currentDiaryDraft) { currentDiaryDraft.title = diaryTitleInput.value; scheduleDiaryAutosave(); } });
+diaryNoteInput.addEventListener("input", () => { if (currentDiaryDraft) { currentDiaryDraft.note = diaryNoteInput.value; scheduleDiaryAutosave(); } });
+diaryPhotoInput.addEventListener("change", async () => {
+  const file = diaryPhotoInput.files && diaryPhotoInput.files[0];
+  diaryPhotoInput.value = "";
+  if (!file) return;
+  if (!diaryEditor.classList.contains("active")) await openDiaryEditor(toDateKey(new Date()));
+  currentDiaryDraft.photoBlob = file;
+  renderDiaryPhoto();
+  scheduleDiaryAutosave();
+});
+diaryPhotoRemove.addEventListener("click", () => {
+  if (!currentDiaryDraft) return;
+  currentDiaryDraft.photoBlob = null;
+  renderDiaryPhoto();
+  scheduleDiaryAutosave();
+});
+diaryEditorClose.addEventListener("click", () => closeDiaryEditor("today-view"));
+diarySaveBtn.addEventListener("click", async () => {
+  await closeDiaryEditor("calendar-view");
+  toast("오늘의 추억을 저장했어요 ✨");
+});
+diaryToolBtns.forEach((button) => {
+  button.addEventListener("click", () => {
+    const tool = button.dataset.diaryTool;
+    diaryToolBtns.forEach((item) => item.classList.toggle("active", item === button));
+    diaryThemePanel.classList.toggle("active", tool === "theme");
+    diaryStickerPicker.classList.toggle("active", tool === "sticker");
+    if (tool === "photo") diaryPhotoInput.click();
+    if (tool === "text") diaryNoteInput.focus();
+  });
+});
+
 // ================= Calendar =================
 let calendarViewDate = new Date();
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 async function renderCalendar() {
-  const grouped = await getStickersGroupedByDate();
+  const [grouped, diaryEntries] = await Promise.all([getStickersGroupedByDate(), getAllDiaryEntries()]);
+  const diaryByDate = new Map(diaryEntries.filter(entryHasContent).map((entry) => [entry.dateKey, entry]));
   const year = calendarViewDate.getFullYear();
   const month = calendarViewDate.getMonth(); // 0-based
   calendarTitle.textContent = `${year}년 ${month + 1}월`;
+
+  const monthEntries = diaryEntries.filter((entry) => {
+    const date = localDateFromKey(entry.dateKey);
+    return entryHasContent(entry) && date.getFullYear() === year && date.getMonth() === month;
+  });
+  monthEntryCount.textContent = monthEntries.length + "일";
+  const moodCounts = monthEntries.reduce((counts, entry) => {
+    if (entry.mood) counts[entry.mood] = (counts[entry.mood] || 0) + 1;
+    return counts;
+  }, {});
+  const favoriteMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+  monthMoodSummary.textContent = favoriteMood
+    ? `이번 달에는 ${MOOD_EMOJI[favoriteMood[0]]} 기분인 날이 가장 많았어요`
+    : "첫 기록을 기다리고 있어요 ✨";
 
   const firstOfMonth = new Date(year, month, 1);
   const gridStart = new Date(year, month, 1 - firstOfMonth.getDay());
@@ -1995,20 +2533,20 @@ async function renderCalendar() {
     const key = toDateKey(cellDate);
     const inMonth = cellDate.getMonth() === month;
     const items = grouped[key] || [];
+    const entry = diaryByDate.get(key);
 
     const cell = document.createElement("div");
     cell.className =
       "cal-cell" +
       (inMonth ? "" : " other-month") +
       (items.length ? " has-sticker" : "") +
+      (entry ? " has-entry" : "") +
       (key === todayKey ? " today" : "");
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.setAttribute("aria-label", key);
-    if (items.length) {
-      btn.addEventListener("click", () => openDaySheet(key));
-    }
+    btn.addEventListener("click", () => openDiaryEditor(key));
     cell.appendChild(btn);
 
     const num = document.createElement("span");
@@ -2016,7 +2554,15 @@ async function renderCalendar() {
     num.textContent = cellDate.getDate();
     cell.appendChild(num);
 
-    if (items.length) {
+    if (entry) {
+      const mood = document.createElement("span");
+      mood.className = "cal-entry-mood";
+      mood.textContent = MOOD_EMOJI[entry.mood] || "✦";
+      cell.appendChild(mood);
+      const dot = document.createElement("span");
+      dot.className = "cal-entry-dot";
+      cell.appendChild(dot);
+    } else if (items.length) {
       const stack = document.createElement("div");
       stack.className = "cal-stack";
       // Show up to 3 stickers fanned out; oldest of the visible ones goes in
@@ -2090,4 +2636,4 @@ if ("serviceWorker" in navigator) {
 }
 
 // ================= Init =================
-showView("gallery-view");
+showView("today-view");

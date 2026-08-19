@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>찍스티커</title>
-<meta name="description" content="좋아하는 걸 찍어서 배경을 지우고 나만의 스티커로 저장해요" />
-<meta name="theme-color" content="#14121F" />
+<meta name="description" content="오늘의 사진을 나만의 스티커로 만들고, 하루 한 페이지에 붙여 추억으로 간직해요" />
+<meta name="theme-color" content="#FFF8FC" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -16,6 +16,57 @@
 </head>
 <body>
 <div id="app">
+
+  <!-- ===== TODAY HOME ===== -->
+  <section id="today-view" class="view active memory-view">
+    <header class="memory-header">
+      <div>
+        <p class="memory-eyebrow" id="today-date-label">오늘</p>
+        <h1>오늘도 반짝이는 하루 ✨</h1>
+      </div>
+      <button class="round-action" id="today-settings-btn" aria-label="설정 열기">⚙️</button>
+    </header>
+    <div class="memory-scroll">
+      <article class="today-hero paper-card">
+        <span class="tape tape-pink" aria-hidden="true"></span>
+        <p class="card-kicker">TODAY'S MOOD</p>
+        <h2>오늘은 어떤 하루였나요?</h2>
+        <div class="mood-picker" id="today-mood-picker">
+          <button data-mood="excited" aria-label="신나요">🤩<span>신나요</span></button>
+          <button data-mood="happy" aria-label="행복해요">🥰<span>행복</span></button>
+          <button data-mood="calm" aria-label="평온해요">😌<span>평온</span></button>
+          <button data-mood="tired" aria-label="피곤해요">😴<span>피곤</span></button>
+          <button data-mood="sad" aria-label="속상해요">🥺<span>속상</span></button>
+        </div>
+      </article>
+
+      <article class="prompt-card">
+        <div class="prompt-sparkle">✦</div>
+        <div>
+          <p class="card-kicker">오늘의 한 줄 질문</p>
+          <h2 id="today-prompt">오늘 가장 웃겼던 일은 뭐였나요?</h2>
+        </div>
+        <button class="soft-primary" id="today-write-btn">기록하기 <span>→</span></button>
+      </article>
+
+      <section class="recent-section">
+        <div class="section-heading">
+          <div>
+            <p class="card-kicker">MY MEMORIES</p>
+            <h2>최근 추억</h2>
+          </div>
+          <button id="today-see-all">모두 보기</button>
+        </div>
+        <div class="memory-preview-list" id="recent-diary-list"></div>
+        <div class="memory-empty paper-card" id="recent-diary-empty">
+          <div class="empty-doodle">☁️</div>
+          <strong>첫 페이지를 만들어볼까요?</strong>
+          <p>사진과 스티커로 오늘을 남겨보세요.</p>
+          <button class="soft-primary" id="empty-write-btn">오늘 기록 시작하기</button>
+        </div>
+      </section>
+    </div>
+  </section>
 
   <!-- ===== CAMERA VIEW ===== -->
   <section id="camera-view" class="view">
@@ -49,16 +100,17 @@
     <div class="review-controls">
       <button class="btn btn-secondary" id="retake-btn">다시 찍기</button>
       <button class="btn btn-primary" id="remove-bg-btn">배경 지우기 ✂️</button>
-      <button class="btn btn-primary hidden" id="save-sticker-btn">저장 💾</button>
+      <button class="btn btn-primary hidden" id="save-sticker-btn">다이어리에 붙이기 📔</button>
+      <button class="btn btn-secondary hidden" id="save-sticker-only-btn">스티커북에 저장</button>
     </div>
   </section>
 
   <!-- ===== GALLERY VIEW (surface covered in collected sticker magnets) ===== -->
-  <section id="gallery-view" class="view active" data-surface="fridge" data-mode="tray">
+  <section id="gallery-view" class="view" data-surface="fridge" data-mode="tray">
     <div class="profile-bar" id="profile-bar">
       <div class="profile-avatar" id="profile-avatar">🏷️</div>
       <div class="profile-info">
-        <div class="profile-name" id="profile-name">동민의 냉장고</div>
+        <div class="profile-name" id="profile-name">나의 스티커북</div>
         <div class="profile-sub" id="sticker-count">0개 모음</div>
       </div>
       <button class="surface-btn hidden" id="gacha-shake-btn" title="흔들어서 쏟기">🎲</button>
@@ -66,14 +118,14 @@
     </div>
     <div class="gallery-mode-toggle" id="gallery-mode-toggle">
       <button class="mode-tab active" data-mode="tray">🗂️ 보관함</button>
-      <button class="mode-tab" data-mode="board">🧲 냉장고</button>
+      <button class="mode-tab" data-mode="board">🧲 나의 보드</button>
     </div>
     <div class="fridge-handle" aria-hidden="true"></div>
     <div class="gallery-scroll">
       <div class="tray-grid" id="tray-grid"></div>
       <div class="empty-state hidden" id="tray-empty">
         <div class="emoji">🗂️</div>
-        <p>아직 보관함이 비어있어요.<br/>카메라 탭에서 좋아하는 걸 찍어보세요!</p>
+        <p>아직 스티커북이 비어있어요.<br/>아래 ＋ 버튼으로 좋아하는 걸 만들어보세요!</p>
       </div>
       <div class="fridge-door" id="fridge-door"></div>
       <div class="empty-state hidden" id="empty-state">
@@ -87,10 +139,13 @@
     </div>
   </section>
 
-  <!-- ===== CALENDAR VIEW ===== -->
-  <section id="calendar-view" class="view">
-    <div class="topbar">
-      <h1><span id="calendar-title">2026년 8월</span></h1>
+  <!-- ===== MEMORY DIARY / CALENDAR VIEW ===== -->
+  <section id="calendar-view" class="view memory-view">
+    <div class="topbar diary-topbar">
+      <div>
+        <p class="memory-eyebrow">MY DIARY</p>
+        <h1>나의 다이어리</h1>
+      </div>
       <div class="calendar-nav">
         <button class="icon-btn-sm" id="cal-prev-btn">‹</button>
         <button class="icon-btn-sm" id="cal-today-btn">오늘</button>
@@ -98,25 +153,130 @@
       </div>
     </div>
     <div class="calendar-scroll">
+      <div class="calendar-month-title"><span id="calendar-title">2026년 8월</span><small>기억하고 싶은 날을 눌러보세요</small></div>
       <div class="weekday-row">
         <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
       </div>
       <div class="calendar-grid" id="calendar-grid"></div>
+      <article class="month-summary paper-card">
+        <span class="tape tape-lavender" aria-hidden="true"></span>
+        <p class="card-kicker">THIS MONTH</p>
+        <h2><span id="month-entry-count">0일</span>의 추억을 남겼어요</h2>
+        <p id="month-mood-summary">첫 기록을 기다리고 있어요 ✨</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===== MY / SETTINGS VIEW ===== -->
+  <section id="my-view" class="view memory-view">
+    <header class="memory-header">
+      <div>
+        <p class="memory-eyebrow">MY SPACE</p>
+        <h1>나만의 공간</h1>
+      </div>
+      <div class="my-avatar">🎀</div>
+    </header>
+    <div class="memory-scroll my-scroll">
+      <article class="paper-card my-profile-card">
+        <p class="card-kicker">DIARY NAME</p>
+        <h2 id="my-diary-name">나의 반짝 다이어리</h2>
+        <button class="text-action" id="my-name-edit">이름 바꾸기</button>
+      </article>
+      <section class="settings-section">
+        <h2>분위기 테마</h2>
+        <p>오늘 기분에 맞는 다이어리 색을 골라보세요.</p>
+        <div class="app-theme-grid" id="app-theme-grid">
+          <button data-app-theme="pastel"><i class="theme-dot pastel"></i>몽글 파스텔</button>
+          <button data-app-theme="highteen"><i class="theme-dot highteen"></i>하이틴 핑크</button>
+          <button data-app-theme="y2k"><i class="theme-dot y2k"></i>Y2K 키치</button>
+          <button data-app-theme="vintage"><i class="theme-dot vintage"></i>빈티지</button>
+        </div>
+      </section>
+      <section class="settings-section">
+        <h2>내 기록</h2>
+        <div class="setting-card">
+          <div><strong id="my-entry-count">0</strong><span>다이어리</span></div>
+          <div><strong id="my-sticker-count">0</strong><span>스티커</span></div>
+        </div>
+      </section>
+      <article class="privacy-note">
+        <span>🔒</span>
+        <div><strong>나만 볼 수 있어요</strong><p>사진과 다이어리는 이 기기에만 저장돼요.</p></div>
+      </article>
     </div>
   </section>
 
   <!-- ===== BOTTOM NAV ===== -->
   <nav class="bottom-nav">
-    <button class="nav-btn" data-tab="camera-view">
-      <span class="nav-icon">📸</span>카메라
-    </button>
-    <button class="nav-btn active" data-tab="gallery-view">
-      <span class="nav-icon">🏷️</span>내 마그넷
+    <button class="nav-btn active" data-tab="today-view">
+      <span class="nav-icon">⌂</span>오늘
     </button>
     <button class="nav-btn" data-tab="calendar-view">
-      <span class="nav-icon">📅</span>달력
+      <span class="nav-icon">▦</span>다이어리
+    </button>
+    <button class="nav-btn nav-create-btn" id="nav-create-btn" aria-label="새로 만들기">
+      <span class="nav-create-icon">＋</span><span>만들기</span>
+    </button>
+    <button class="nav-btn" data-tab="gallery-view">
+      <span class="nav-icon">♧</span>스티커북
+    </button>
+    <button class="nav-btn" data-tab="my-view">
+      <span class="nav-icon">☺</span>마이
     </button>
   </nav>
+</div>
+
+<!-- ===== CREATE ACTION SHEET ===== -->
+<div id="create-sheet" class="memory-sheet" aria-hidden="true">
+  <button class="sheet-backdrop" id="create-sheet-backdrop" aria-label="닫기"></button>
+  <div class="memory-sheet-panel">
+    <div class="sheet-handle"></div>
+    <p class="card-kicker">CREATE SOMETHING</p>
+    <h2>오늘 무엇을 만들까요?</h2>
+    <button class="create-choice primary" id="create-diary-btn"><span>📔</span><div><strong>오늘의 다이어리</strong><small>사진과 스티커로 하루 꾸미기</small></div><b>→</b></button>
+    <button class="create-choice" id="create-sticker-btn"><span>✂️</span><div><strong>사진 스티커</strong><small>내 사진을 오려 스티커 만들기</small></div><b>→</b></button>
+    <button class="create-choice" id="quick-photo-btn"><span>📷</span><div><strong>빠른 사진 기록</strong><small>사진 한 장으로 바로 시작하기</small></div><b>→</b></button>
+  </div>
+</div>
+
+<!-- ===== DIARY EDITOR ===== -->
+<div id="diary-editor" aria-hidden="true">
+  <header class="diary-editor-header">
+    <button id="diary-editor-close">닫기</button>
+    <div><strong id="diary-editor-date">오늘의 다이어리</strong><small id="diary-save-state">기기에 자동 저장</small></div>
+    <button class="diary-save-btn" id="diary-save-btn">완료</button>
+  </header>
+  <div class="diary-editor-scroll">
+    <div class="editor-mood-row" id="editor-mood-row">
+      <span>오늘의 무드</span>
+      <button data-mood="excited">🤩</button><button data-mood="happy">🥰</button><button data-mood="calm">😌</button><button data-mood="tired">😴</button><button data-mood="sad">🥺</button>
+    </div>
+    <main class="diary-paper" id="diary-paper" data-paper-theme="lavender">
+      <span class="paper-ring ring-one" aria-hidden="true"></span><span class="paper-ring ring-two" aria-hidden="true"></span>
+      <input id="diary-title-input" maxlength="40" placeholder="오늘의 제목" />
+      <div class="diary-photo-frame hidden" id="diary-photo-frame"><img id="diary-photo-preview" alt="다이어리 사진" /><button id="diary-photo-remove" aria-label="사진 삭제">×</button></div>
+      <textarea id="diary-note-input" maxlength="600" placeholder="오늘의 이야기를 적어보세요…"></textarea>
+      <div id="diary-sticker-layer" aria-label="붙인 스티커 영역"></div>
+      <div class="paper-signature">zzik diary ♡</div>
+    </main>
+  </div>
+  <div class="diary-tool-panel">
+    <div class="diary-tool-content active" id="diary-theme-panel">
+      <button data-paper-theme="lavender" class="active"><i class="paper-swatch lavender"></i>라벤더</button>
+      <button data-paper-theme="pink"><i class="paper-swatch pink"></i>핑크</button>
+      <button data-paper-theme="blue"><i class="paper-swatch blue"></i>블루</button>
+      <button data-paper-theme="cream"><i class="paper-swatch cream"></i>빈티지</button>
+      <button data-paper-theme="night"><i class="paper-swatch night"></i>나이트</button>
+    </div>
+    <div class="diary-tool-content" id="diary-sticker-picker"><p>스티커북이 비어 있어요. 먼저 사진 스티커를 만들어보세요!</p></div>
+    <nav class="diary-tools">
+      <button data-diary-tool="theme" class="active"><span>▧</span>배경</button>
+      <button data-diary-tool="photo"><span>▣</span>사진</button>
+      <button data-diary-tool="sticker"><span>♡</span>스티커</button>
+      <button data-diary-tool="text"><span>Aa</span>글자</button>
+    </nav>
+  </div>
+  <input type="file" accept="image/*" id="diary-photo-input" hidden />
 </div>
 
 <!-- ===== SURFACE PICKER (choose what the magnets are stuck to) ===== -->
@@ -203,7 +363,7 @@
     <img id="lightbox-img" alt="스티커 크게 보기" />
   </div>
   <div class="lightbox-controls">
-    <button class="btn btn-primary lightbox-place-btn hidden" id="lightbox-place">냉장고에 붙이기 🧲</button>
+    <button class="btn btn-primary lightbox-place-btn hidden" id="lightbox-place">나의 보드에 붙이기 🧲</button>
     <div class="lightbox-controls-row">
       <button class="btn btn-secondary" id="lightbox-delete">삭제</button>
       <button class="btn btn-primary" id="lightbox-share">공유 / 저장 📤</button>
