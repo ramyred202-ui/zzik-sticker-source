@@ -1,0 +1,1421 @@
+:root {
+  --accent: #7C6CF0;
+  --accent-2: #FF7AC6;
+  --bg: #FFFBF5;
+  --card: #FFFFFF;
+  --ink: #2C2740;
+  --ink-soft: #8B85A3;
+  --danger: #FF5D6C;
+  --success: #35C98E;
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif;
+  overscroll-behavior-y: none;
+  user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  padding: calc(14px + var(--safe-top)) 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.topbar h1 {
+  font-size: 19px;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.topbar h1 span {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.count-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: #EFECFF;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+/* ---------- Views ---------- */
+.view {
+  flex: 1;
+  min-height: 0;
+  display: none;
+  flex-direction: column;
+  position: relative;
+}
+.view.active { display: flex; }
+
+/* ---------- Camera view ---------- */
+#camera-view { background: #14121F; }
+
+.camera-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+#camera-video, #captured-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.build-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  background: rgba(0,0,0,0.35);
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+.camera-hint {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  font-size: 12.5px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+
+.camera-controls {
+  flex-shrink: 0;
+  padding: 22px 24px calc(26px + var(--safe-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #14121F;
+}
+
+.icon-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:active { transform: scale(0.92); }
+
+.shutter-btn {
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
+  border: 5px solid #fff;
+  background: transparent;
+  padding: 4px;
+}
+.shutter-btn::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: #fff;
+}
+.shutter-btn:active::after { background: #ddd; }
+
+.spacer-50 { width: 50px; }
+
+/* ---------- Review / result view ---------- */
+#review-view { background: #14121F; }
+
+.review-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.checker-bg {
+  background-image:
+    linear-gradient(45deg, #2a2735 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2735 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2735 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2735 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+  background-color: #1c1a28;
+}
+
+#result-img, #preview-img {
+  max-width: 88%;
+  max-height: 88%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.select-hint {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.select-hint.hidden { display: none; }
+
+.select-lasso {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  pointer-events: none;
+  z-index: 3;
+}
+.select-lasso.active { display: block; }
+
+
+.processing-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(20,18,31,0.88);
+  color: #fff;
+  text-align: center;
+  padding: 0 30px;
+}
+.processing-overlay.active { display: flex; }
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: var(--accent-2);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.processing-overlay p { margin: 0; font-size: 14px; color: #cfcbe0; }
+.processing-overlay .big { font-size: 15.5px; font-weight: 700; color: #fff; }
+
+.progress-track {
+  width: 200px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.25s ease;
+}
+
+.review-controls {
+  flex-shrink: 0;
+  padding: 18px 22px calc(24px + var(--safe-bottom));
+  display: flex;
+  gap: 12px;
+  background: #14121F;
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 15px 18px;
+  font-size: 15.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  flex: 1;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: #fff;
+  flex: 2;
+  box-shadow: 0 8px 20px rgba(124,108,240,0.35);
+}
+
+/* ---------- Gallery view: fridge door of collected sticker magnets ---------- */
+#gallery-view {
+  /* The "start screen" is the plain white magnet tray — the steel fridge
+     background only kicks in once you switch to the board tab. */
+  background: #FFFFFF;
+}
+#gallery-view[data-mode="board"] {
+  /* A soft overhead light + a darker floor-ward falloff, instead of one flat
+     gradient — gives the wall behind the door a bit of room depth. */
+  background:
+    radial-gradient(ellipse 140% 55% at 50% 0%, rgba(255,255,255,0.4), transparent 62%),
+    linear-gradient(180deg, #C7CCD3 0%, #AEB4BD 68%, #9AA2AF 100%);
+}
+#gallery-view[data-mode="tray"] .fridge-handle,
+#gallery-view[data-mode="tray"] #surface-btn,
+#gallery-view[data-mode="tray"] .fridge-door,
+#gallery-view[data-mode="tray"] #empty-state {
+  display: none;
+}
+#gallery-view[data-mode="board"] .tray-grid,
+#gallery-view[data-mode="board"] #tray-empty {
+  display: none;
+}
+
+/* ---- Segmented tray/board mode toggle ---- */
+.gallery-mode-toggle {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  margin: 0 20px 14px;
+  background: rgba(124,108,240,0.09);
+  padding: 4px;
+  border-radius: 999px;
+}
+.mode-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 9px 0;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.mode-tab.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 3px 8px rgba(20,18,31,0.14);
+}
+
+/* ---- Tray: plain white shelf of not-yet-placed magnets ---- */
+.tray-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px 14px;
+  padding: 6px 18px 4px;
+}
+.tray-tile {
+  position: relative;
+  aspect-ratio: 1/1;
+  cursor: pointer;
+}
+.tray-tile-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #F7F5FF 0%, #ECE8FB 62%, #E1DBF6 100%);
+  box-shadow: inset 0 2px 5px rgba(124,108,240,0.12), 0 4px 10px rgba(124,108,240,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15%;
+}
+.tray-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 8px rgba(20,18,31,0.18));
+}
+.tray-pin {
+  position: absolute;
+  right: 3%;
+  bottom: 3%;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(20,18,31,0.28);
+  pointer-events: none;
+}
+
+/* A door-handle silhouette pinned to the edge of the screen, always visible
+   regardless of scroll — the simplest possible visual cue that this is a
+   fridge, without needing any image assets. Sits in the upper third like a
+   real fridge handle, with a lighter streak down the middle for a chrome
+   highlight. */
+.fridge-handle {
+  position: absolute;
+  right: 6px;
+  top: 9%;
+  width: 13px;
+  height: 128px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #B5BBC5 0%, #F2F4F7 35%, #DEE2E8 55%, #969DAA 100%);
+  box-shadow: 0 3px 8px rgba(20,18,31,0.28), inset 0 0 0 1px rgba(255,255,255,0.4);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.profile-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(16px + var(--safe-top)) 20px 14px;
+}
+
+.profile-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.profile-info { min-width: 0; flex: 1; }
+
+.surface-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  background: #FFFFFF;
+  box-shadow: 0 3px 8px rgba(20,18,31,0.12);
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.profile-name {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+}
+
+.profile-sub {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.gallery-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Top padding keeps a breathing gap above the fridge door (so it reads as
+     a real appliance rather than a panel flush against the screen edge) and
+     gives top-row magnets' captions/speech-bubbles room to render without
+     being clipped by this container's own scroll boundary. */
+  padding: 42px 0 calc(16px + var(--safe-bottom));
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 14px;
+}
+
+.sticker-tile {
+  position: relative;
+  aspect-ratio: 1/1;
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sticker-tile img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(44,39,64,0.14));
+}
+
+/* The fridge door itself: a brushed-steel panel (diagonal light streak +
+   fine horizontal texture lines, like light catching brushed metal), a
+   small dispenser-bezel shadow near the top-left, and a touch of warm
+   ambient light spilling down from "above the fridge" — modeled after a
+   real magnet-covered kitchen fridge photo the person shared as a
+   reference. Its height is set from JS based on how many magnets need to
+   fit. */
+.fridge-door {
+  position: relative;
+  min-height: 100%;
+  /* Top-rounded only, square at the bottom — reads as an appliance that
+     extends past the bottom of the screen rather than a floating card. */
+  border-radius: 22px 22px 0 0;
+  background-image:
+    radial-gradient(60% 90px at 50% 0%, rgba(255,232,199,0.30), rgba(255,232,199,0) 100%),
+    radial-gradient(30px 20px at 9% 32px, rgba(20,18,31,0.20), rgba(20,18,31,0.02) 75%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 1px, rgba(20,18,31,0.02) 1px 2px),
+    linear-gradient(105deg, #D6DBE1 0%, #C0C6CE 28%, #EDF0F3 48%, #C0C6CE 68%, #D6DBE1 100%);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-position: top center, 0 0, 0 0, 0 0;
+  background-size: 100% 90px, auto, auto, auto;
+  box-shadow:
+    inset 0 0 0 1px rgba(20,18,31,0.08),
+    inset 0 20px 34px rgba(20,18,31,0.13),
+    inset 0 -30px 40px rgba(20,18,31,0.10);
+}
+.fridge-door::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 26%;
+  height: 1px;
+  background: rgba(20,18,31,0.07);
+}
+/* A separate freezer-drawer section, always pinned to the true bottom edge
+   at a fixed height (same anchoring trick as the partition's desk strip)
+   regardless of how tall the main door grows as more photos get pinned to
+   it — mirrors the reference photo's two-part fridge (main door on top,
+   drawer below), including a faint handle groove. Photos can still land on
+   this section same as the rest of the door; it's a visual split, not a
+   separate no-pin zone. */
+.fridge-door::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 92px;
+  background-image:
+    linear-gradient(rgba(20,18,31,0.22), rgba(20,18,31,0.22)),
+    linear-gradient(180deg, rgba(20,18,31,0.16) 0%, rgba(20,18,31,0) 12px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 1px, rgba(20,18,31,0.02) 1px 2px),
+    linear-gradient(105deg, #C7CCD3 0%, #B4BAC3 28%, #DEE2E6 48%, #B4BAC3 68%, #C7CCD3 100%);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-position: 10% 46px, top, 0 0, 0 0;
+  background-size: 80% 3px, 100% 12px, auto, auto;
+  box-shadow: 0 -1px 0 rgba(20,18,31,0.18);
+}
+/* When the board has no magnets yet, JS collapses .fridge-door to 0 height
+   for the empty-state illustration — but ::after's height is a fixed 92px
+   regardless of the door's own height (that's what keeps it pinned to the
+   bottom as photos pile up), so left alone it would float oddly above the
+   collapsed door instead of disappearing with it. */
+.fridge-door.empty::before,
+.fridge-door.empty::after {
+  display: none;
+}
+
+/* ---- Surface variants: what the magnets are stuck to ---- */
+/* 화이트보드: matte white panel with an aluminum-frame edge, no freezer seam. */
+#gallery-view[data-surface="whiteboard"] .fridge-door {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FBFBFA 55%, #F3F2ED 100%);
+  box-shadow:
+    inset 0 0 0 7px #E7E9EC,
+    inset 0 0 0 8px #C9CDD3,
+    inset 0 10px 22px rgba(20,18,31,0.04);
+}
+#gallery-view[data-surface="whiteboard"] .fridge-door::before { display: none; }
+#gallery-view[data-surface="whiteboard"] .fridge-door::after { display: none; }
+#gallery-view[data-surface="whiteboard"] .fridge-handle { display: none; }
+
+/* 현관문: warm wood-toned panel with subtle vertical grain and a round
+   doorknob instead of a fridge-style handle bar. */
+#gallery-view[data-surface="door"] .fridge-door {
+  background:
+    repeating-linear-gradient(90deg, rgba(70,45,15,0.05) 0 2px, transparent 2px 28px),
+    linear-gradient(180deg, #EADFC8 0%, #DCCBA3 55%, #CBB07E 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(90,60,20,0.12),
+    inset 0 12px 26px rgba(60,38,10,0.08);
+}
+#gallery-view[data-surface="door"] .fridge-door::before { display: none; }
+#gallery-view[data-surface="door"] .fridge-door::after { display: none; }
+#gallery-view[data-surface="door"] .fridge-handle {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  top: 56%;
+  background: radial-gradient(circle at 35% 30%, #FFE9A8, #C9A227 65%, #8C7015);
+  box-shadow: 0 2px 5px rgba(40,25,5,0.4), inset 0 0 0 1px rgba(255,255,255,0.35);
+}
+
+/* 파티션: redesigned to read as sitting at your own desk looking up at a
+   fabric cubicle divider, like the reference desk-partition product
+   photos — a woven fabric panel (where photos get pinned, same as before)
+   rising up from a light desk surface at the very bottom, with a couple of
+   small mounting clips at the seam where the two meet. The desk strip is a
+   fixed height (see ::after below) rather than a percentage, so it always
+   hugs the true bottom edge as a constant-height "you're sitting right
+   here" strip no matter how tall the fabric area grows as more photos get
+   pinned above it. */
+#gallery-view[data-surface="partition"] .fridge-door {
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(20,18,31,0.045) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, #A6B0BB 0%, #8D97A3 55%, #78828E 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(20,18,31,0.08),
+    inset 0 16px 26px rgba(20,18,31,0.10);
+}
+#gallery-view[data-surface="partition"] .fridge-door::before { display: none; }
+#gallery-view[data-surface="partition"] .fridge-door::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 84px;
+  background-image:
+    /* three small mounting clips along the seam, like the brackets that
+       hold a real desk-mounted partition panel upright */
+    radial-gradient(circle 4px at 14% 5px, #6B7280 92%, transparent),
+    radial-gradient(circle 4px at 50% 5px, #6B7280 92%, transparent),
+    radial-gradient(circle 4px at 86% 5px, #6B7280 92%, transparent),
+    /* soft shadow the standing panel casts onto the desk right below it */
+    linear-gradient(180deg, rgba(20,18,31,0.14) 0%, rgba(20,18,31,0) 14px),
+    /* the desk surface itself — a warm light wood tone */
+    linear-gradient(180deg, #F5EEE1 0%, #E9DDC8 50%, #D9C8A7 100%);
+  box-shadow:
+    0 -1px 0 rgba(20,18,31,0.18),
+    inset 0 2px 4px rgba(255,255,255,0.45);
+}
+#gallery-view[data-surface="partition"] .fridge-handle { display: none; }
+
+/* 가챠: a playful scatter of gachapon capsules across the whole panel —
+   "우르르 쏟아지는" feel via a tiled multi-circle pattern rather than a
+   literal machine illustration. The pattern used to live directly on
+   .fridge-door's own background, at full color and right behind the
+   magnets — busy enough that it competed with the photos piled on top of
+   it instead of reading as a backdrop. It's moved onto ::before now (a
+   separate layer painted behind the magnets, same as the plain door's own
+   ::before seam line) with a blur filter and lower opacity, so it stays
+   soft and out of the way; .fridge-door itself keeps only a plain warm
+   base tone. Blurring ::before instead of .fridge-door itself matters —
+   blurring the door would blur the magnets too, since they're children of
+   it. */
+#gallery-view[data-surface="gacha"] .fridge-door {
+  background-color: #FFF6FA;
+  box-shadow:
+    inset 0 0 0 1px rgba(20,18,31,0.06),
+    inset 0 18px 30px rgba(20,18,31,0.08);
+}
+#gallery-view[data-surface="gacha"] .fridge-door::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* The plain (non-gacha) ::before rule below sets an explicit height: 1px
+     for its thin freezer-seam line. inset: 0 alone doesn't override a
+     height that's set explicitly elsewhere — top/bottom being 0 only
+     stretches an element when height is left at its auto default — so
+     without this, the pattern layer was inheriting that 1px height and
+     rendering as an invisible sliver instead of covering the door. */
+  width: 100%;
+  height: 100%;
+  /* Contains the blur (below) to the door's own rounded silhouette. This
+     has to live on ::before itself, as a clip-path — putting overflow:
+     hidden on .fridge-door instead (the more obvious way to contain a
+     child's blur) would also clip the magnets' resize handles, which
+     legitimately hang a few px past a magnet's own edge and often sit
+     right at the door's floor/wall boundary once a pile has settled there.
+     clip-path only affects this pseudo-element's own painted output, so
+     the handles stay untouched. */
+  clip-path: inset(0 round 22px 22px 0 0);
+  background-image:
+    radial-gradient(circle 9px at 12% 18%, #FF8FBE 97%, transparent),
+    radial-gradient(circle 7px at 34% 40%, #FFC24B 97%, transparent),
+    radial-gradient(circle 10px at 58% 15%, #5AD1C8 97%, transparent),
+    radial-gradient(circle 8px at 78% 34%, #8E7CF7 97%, transparent),
+    radial-gradient(circle 6px at 22% 62%, #FF8A5C 97%, transparent),
+    radial-gradient(circle 9px at 46% 72%, #4FD1E8 97%, transparent),
+    radial-gradient(circle 7px at 68% 58%, #FFD86B 97%, transparent),
+    radial-gradient(circle 8px at 88% 70%, #FF7AC6 97%, transparent),
+    radial-gradient(circle 6px at 8% 85%, #7CC6A5 97%, transparent),
+    radial-gradient(circle 9px at 40% 92%, #FF9F6B 97%, transparent),
+    radial-gradient(circle 7px at 64% 88%, #9C8CFB 97%, transparent),
+    radial-gradient(circle 8px at 92% 92%, #5AD1C8 97%, transparent);
+  background-repeat: repeat;
+  background-size: 150px 150px;
+  opacity: 0.55;
+  filter: blur(7px);
+}
+#gallery-view[data-surface="gacha"] .fridge-door::after { display: none; }
+#gallery-view[data-surface="gacha"] .fridge-handle { display: none; }
+/* The gacha board is a contained physics playground, not a tall scrolling
+   panel — magnets pile up against a fixed floor instead of the page
+   scrolling to fit them, so scrolling is turned off while it's active. */
+#gallery-view[data-surface="gacha"][data-mode="board"] .gallery-scroll {
+  overflow: hidden;
+}
+
+/* Each saved sticker becomes a "magnet": just the cut-out sticker itself,
+   tacked on at a slightly random spot and angle so the surface looks
+   organically covered rather than gridded — the way a real fridge fills up
+   over time. No card/frame — a drop-shadow on the image is what sells the
+   "stuck onto the surface" look. */
+.magnet {
+  position: absolute;
+  width: 74px;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: translate(-50%, -50%) rotate(var(--magnet-rot, 0deg));
+  transition: transform 0.12s ease;
+}
+.magnet:active {
+  transform: translate(-50%, -50%) scale(0.94) rotate(var(--magnet-rot, 0deg));
+}
+/* Driven from JS on pointerdown (see wireMagnetGestures) rather than relying
+   only on :active — iOS Safari doesn't reliably apply :active from pointer
+   events, and this is the "acknowledged your touch" cue for the ~380ms
+   before the long-press .picked lift kicks in. */
+.magnet.magnet-touch {
+  transform: translate(-50%, -50%) scale(0.95) rotate(var(--magnet-rot, 0deg));
+  transition: transform 0.05s ease;
+}
+.magnet img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 8px rgba(20,18,31,0.30)) drop-shadow(0 1px 2px rgba(20,18,31,0.22));
+  pointer-events: none;
+}
+
+/* A soft grounding shadow beneath each magnet, independent of the image's
+   own drop-shadow filter — where two magnets overlap in a pile, their
+   contact shadows overlap too and darken together, reading as real ambient
+   occlusion between stacked objects instead of every sticker looking like
+   it's floating at the same flat height. Sits in the negative z-index layer
+   of .magnet's own stacking context (established by its transform), so it's
+   always beneath the artwork regardless of DOM order. */
+.magnet-contact-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  width: 72%;
+  height: 20%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(20,18,31,0.34), rgba(20,18,31,0) 78%);
+  filter: blur(3px);
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  opacity: 0.7;
+}
+
+/* Squash-and-stretch "thud" the instant a magnet lands hard — either on the
+   floor or on top of another magnet (see gachaStep's impact detection /
+   triggerMagnetImpact). Landing without any visual "hit" reaction is what
+   made the pile feel dead/robotic even after the physics itself settled
+   correctly; a quick compress-then-rebound sells the weight of impact the
+   way a real object dropping would. Re-declares rotate(var(--magnet-rot))
+   at every step so a spinning magnet's tilt keeps animating smoothly
+   through the squash instead of snapping to whatever angle it had when the
+   impact class was added. */
+@keyframes magnet-squash {
+  0% { transform: translate(-50%, -50%) rotate(var(--magnet-rot, 0deg)) scale(1, 1); }
+  28% { transform: translate(-50%, -50%) rotate(var(--magnet-rot, 0deg)) scale(1.16, 0.8); }
+  55% { transform: translate(-50%, -50%) rotate(var(--magnet-rot, 0deg)) scale(0.93, 1.09); }
+  78% { transform: translate(-50%, -50%) rotate(var(--magnet-rot, 0deg)) scale(1.04, 0.97); }
+  100% { transform: translate(-50%, -50%) rotate(var(--magnet-rot, 0deg)) scale(1, 1); }
+}
+.magnet.impact {
+  animation: magnet-squash 340ms cubic-bezier(0.34, 1.56, 0.64, 1) 1;
+}
+.magnet.impact .magnet-contact-shadow {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.3, 0.8);
+  transition: opacity 0.08s ease, transform 0.08s ease;
+}
+
+/* Glossy highlight overlay for the "볼록 입체감" (convex) magnet design —
+   a soft light blob in the upper-left fakes a domed/epoxy sticker look.
+   This used to use mix-blend-mode: soft-light, which combined with the
+   sticker <img>'s own drop-shadow filter sitting right next to it in the
+   same (transform-created) stacking context — a known WebKit/Safari
+   compositing bug where a blended element next to a filtered sibling can
+   render the whole area blank instead of blending. That's the most likely
+   cause of "볼록하게 켜고 확인 누르면 이미지가 사라짐": the highlight wasn't
+   just failing to show, it was taking the sticker down with it. Plain alpha
+   (no blend mode) is a little less "glassy" but can't hit that bug class at
+   all, which matters more here than the extra polish. */
+.magnet-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.5), rgba(255,255,255,0) 55%);
+  pointer-events: none;
+  /* mask-image itself is set from JS (setMagnetDesign) to match whatever
+     the sticker's current <img> src is — these controls just make sure
+     that mask, whatever it is, is scaled/positioned the exact same way
+     .magnet img's object-fit: contain lays out the real photo, so the
+     highlight lines up with the actual artwork instead of the square box. */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* Small label under the magnet ("하단 글자 박스") and a comic speech bubble
+   above it ("말풍선") — both counter-rotate against the magnet's own tilt so
+   the text always reads upright, like a real note stuck on top. */
+.magnet-caption {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) rotate(calc(-1 * var(--magnet-rot, 0deg)));
+  margin-top: 5px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(20,18,31,0.2);
+  white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.magnet-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) rotate(calc(-1 * var(--magnet-rot, 0deg)));
+  margin-bottom: 9px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 13px;
+  box-shadow: 0 2px 6px rgba(20,18,31,0.2);
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.magnet-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+}
+
+/* ---- Long-press to pick up a magnet: drag to move, corner handle to resize ---- */
+#gallery-view[data-mode="board"] .magnet { cursor: grab; }
+/* A brief lift-and-grow the instant a long-press is recognized, so picking a
+   magnet up feels tactile even without haptics. */
+.magnet.picked {
+  transform: translate(-50%, -50%) scale(1.14) rotate(var(--magnet-rot, 0deg));
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 3;
+}
+/* No dashed selection outline — with the shine effect now masked tightly
+   to the sticker's own die-cut shape (see .magnet-shine above), a square
+   dashed box around it read as belonging to the photo/effect rather than
+   just being a selection indicator, so it's been dropped. The lifted scale
+   (.magnet.picked above) plus the resize handle and edit toolbar showing
+   up are enough of a "this one's selected" signal on their own. */
+.magnet-resize-handle {
+  display: none;
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(20,18,31,0.3);
+  transform: rotate(calc(-1 * var(--magnet-rot, 0deg)));
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.magnet.selected .magnet-resize-handle { display: flex; }
+
+.edit-toolbar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(18px + var(--safe-bottom));
+  transform: translateX(-50%) translateY(12px);
+  display: flex;
+  gap: 8px;
+  background: rgba(20,18,31,0.92);
+  padding: 8px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(20,18,31,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 5;
+}
+.edit-toolbar.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.edit-toolbar-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+.edit-toolbar-btn.secondary {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+}
+
+.empty-state {
+  margin-top: 20vh;
+  text-align: center;
+  color: var(--ink-soft);
+  padding: 0 30px;
+}
+.empty-state .emoji { font-size: 48px; margin-bottom: 10px; }
+.empty-state p { font-size: 14.5px; line-height: 1.6; margin: 0; }
+
+/* ---------- Lightbox ---------- */
+#lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,18,31,0.92);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 70;
+  padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
+}
+#lightbox.active { display: flex; }
+
+.lightbox-stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#lightbox-img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+}
+
+.lightbox-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding-top: 16px;
+}
+.lightbox-controls-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+.lightbox-place-btn {
+  width: 100%;
+  background: linear-gradient(120deg, #FF8FBE, #FFC24B);
+  box-shadow: 0 8px 20px rgba(255,122,198,0.35);
+}
+.lightbox-place-btn.hidden { display: none; }
+
+.lightbox-close {
+  position: absolute;
+  top: calc(18px + var(--safe-top));
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 18px;
+}
+
+/* ---------- Calendar view ---------- */
+#calendar-view { background: var(--bg); }
+#calendar-view .topbar h1 { font-size: 17px; }
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn-sm {
+  border: none;
+  background: #F0EDF7;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 13px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+}
+.icon-btn-sm:active { transform: scale(0.94); }
+
+.calendar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 14px calc(16px + var(--safe-bottom));
+}
+
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 6px 2px 8px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-cell {
+  position: relative;
+  aspect-ratio: 1/1;
+  border-radius: 14px;
+  background: #F5F3FF;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-cell.other-month { opacity: 0.32; }
+.cal-cell.today { box-shadow: inset 0 0 0 2px var(--accent); }
+
+.cal-daynum {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  z-index: 2;
+  pointer-events: none;
+}
+.cal-cell.has-sticker .cal-daynum { color: var(--ink); }
+
+.cal-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cal-thumb {
+  position: absolute;
+  width: 46%;
+  height: 46%;
+  object-fit: contain;
+  left: 50%;
+  top: 54%;
+  filter: drop-shadow(0 2px 5px rgba(44,39,64,0.22));
+  transition: transform 0.15s ease;
+}
+/* Fan the (up to) 3 stickers out like a small stack of photos — the
+   last child painted is the most recent sticker, so it sits on top. */
+.cal-thumb:nth-last-child(3) { transform: translate(-68%, -68%) rotate(-10deg) scale(0.82); z-index: 1; }
+.cal-thumb:nth-last-child(2) { transform: translate(-42%, -58%) rotate(6deg) scale(0.9); z-index: 2; }
+.cal-thumb:nth-last-child(1) { transform: translate(-50%, -50%) rotate(0deg) scale(1); z-index: 3; }
+
+.cal-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(44,39,64,0.72);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cal-cell button {
+  all: unset;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* ---------- Day sheet ---------- */
+#day-sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,18,31,0.5);
+  display: none;
+  align-items: flex-end;
+  z-index: 60;
+}
+#day-sheet.active { display: flex; }
+
+.day-sheet-panel {
+  width: 100%;
+  max-height: 78vh;
+  background: #fff;
+  border-radius: 26px 26px 0 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--safe-bottom);
+}
+
+.day-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 10px;
+  flex-shrink: 0;
+}
+
+.day-sheet-title {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+#day-sheet .lightbox-close {
+  position: static;
+  background: #F0EDF7;
+  color: var(--ink);
+}
+
+.day-sheet-scroll {
+  overflow-y: auto;
+  padding: 4px 20px 26px;
+}
+
+#day-sheet .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+#day-sheet .sticker-tile { background: #FAF9FD; }
+
+/* ---------- Surface picker sheet ---------- */
+#surface-sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,18,31,0.5);
+  display: none;
+  align-items: flex-end;
+  z-index: 60;
+}
+#surface-sheet.active { display: flex; }
+#surface-sheet .lightbox-close {
+  position: static;
+  background: #F0EDF7;
+  color: var(--ink);
+}
+
+.surface-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 12px;
+  padding: 6px 20px calc(24px + var(--safe-bottom));
+}
+
+.surface-option {
+  border: none;
+  background: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.surface-option.active { color: var(--ink); }
+
+.surface-swatch {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(20,18,31,0.06);
+}
+.surface-option.active .surface-swatch {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+.surface-swatch-fridge {
+  background: linear-gradient(180deg, #FDFEFF 0%, #F3F5F9 55%, #EAEDF3 100%);
+}
+.surface-swatch-whiteboard {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FBFBFA 55%, #F3F2ED 100%);
+}
+.surface-swatch-door {
+  background: linear-gradient(180deg, #EADFC8 0%, #DCCBA3 55%, #CBB07E 100%);
+}
+.surface-swatch-partition {
+  background: linear-gradient(180deg, #AEB9C4 0%, #93A0AE 55%, #7C8A99 100%);
+}
+.surface-swatch-gacha {
+  background:
+    radial-gradient(circle 5px at 25% 30%, #FF8FBE 97%, transparent),
+    radial-gradient(circle 4px at 60% 20%, #FFC24B 97%, transparent),
+    radial-gradient(circle 5px at 80% 55%, #5AD1C8 97%, transparent),
+    radial-gradient(circle 4px at 35% 68%, #8E7CF7 97%, transparent),
+    radial-gradient(circle 4px at 65% 80%, #FF8A5C 97%, transparent),
+    linear-gradient(180deg, #FFF6FA 0%, #FCEEF5 100%);
+}
+
+/* ---------- Decorate sheet (per-magnet design) ---------- */
+#decorate-sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,18,31,0.5);
+  display: none;
+  align-items: flex-end;
+  z-index: 60;
+}
+#decorate-sheet.active { display: flex; }
+#decorate-sheet .lightbox-close {
+  position: static;
+  background: #F0EDF7;
+  color: var(--ink);
+}
+
+.decorate-body {
+  padding: 6px 20px calc(24px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.decorate-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.decorate-row-toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.decorate-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.decorate-border-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.decorate-border-controls input[type="color"] {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+.decorate-clear-btn {
+  border: none;
+  background: #F0EDF7;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.decorate-toggle {
+  width: 46px;
+  height: 28px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #E4E0F0;
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s ease;
+}
+.decorate-toggle::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(20,18,31,0.3);
+  transition: transform 0.15s ease;
+}
+.decorate-toggle:checked {
+  background: var(--accent);
+}
+.decorate-toggle:checked::before {
+  transform: translateX(18px);
+}
+
+.decorate-body input[type="text"] {
+  border: none;
+  background: #F5F3FA;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--ink);
+  font-family: inherit;
+}
+.decorate-body input[type="text"]:focus {
+  outline: 2px solid var(--accent);
+}
+
+.decorate-confirm-btn {
+  margin-top: 6px;
+}
+
+/* ---------- Bottom nav ---------- */
+.bottom-nav {
+  flex-shrink: 0;
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid #F0EDF7;
+  padding: 10px 10px calc(10px + var(--safe-bottom));
+}
+.nav-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.nav-btn .nav-icon { font-size: 21px; }
+.nav-btn.active { color: var(--accent); }
+
+.hidden { display: none !important; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(90px + var(--safe-bottom));
+  transform: translateX(-50%) translateY(20px);
+  background: #2C2740;
+  color: #fff;
+  padding: 11px 20px;
+  border-radius: 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 100;
+  max-width: 85vw;
+  text-align: center;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

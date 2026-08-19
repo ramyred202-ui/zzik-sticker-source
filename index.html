@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>찍스티커</title>
+<meta name="description" content="좋아하는 걸 찍어서 배경을 지우고 나만의 스티커로 저장해요" />
+<meta name="theme-color" content="#14121F" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="찍스티커" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== CAMERA VIEW ===== -->
+  <section id="camera-view" class="view">
+    <div class="camera-stage">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <canvas id="captured-canvas" class="hidden"></canvas>
+      <div class="camera-hint" id="camera-hint">좋아하는 걸 화면 가운데에 두고 찍어보세요 ✨</div>
+      <div class="build-badge" id="build-badge"></div>
+    </div>
+    <div class="camera-controls">
+      <button class="icon-btn" id="pick-file-btn" title="앨범에서 선택 (배경 없는 사진은 자동으로 인식해요)">🖼️</button>
+      <button class="shutter-btn" id="shutter-btn" title="촬영"></button>
+      <button class="icon-btn" id="flip-camera-btn" title="카메라 전환">🔄</button>
+    </div>
+  </section>
+
+  <!-- ===== REVIEW / RESULT VIEW ===== -->
+  <section id="review-view" class="view">
+    <div class="review-stage checker-bg" id="review-stage">
+      <img id="preview-img" alt="촬영한 사진" />
+      <img id="result-img" class="hidden" alt="배경이 제거된 스티커" />
+      <div class="select-hint" id="select-hint">✋ 손가락으로 물체 주변을 그리면 그 부분만 배경을 지워드려요</div>
+      <canvas class="select-lasso" id="select-lasso"></canvas>
+      <div class="processing-overlay" id="processing-overlay">
+        <div class="spinner"></div>
+        <p class="big" id="processing-title">배경을 지우는 중이에요…</p>
+        <p id="processing-sub">처음 한 번은 AI 모델을 내려받느라 조금 걸려요</p>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+    </div>
+    <div class="review-controls">
+      <button class="btn btn-secondary" id="retake-btn">다시 찍기</button>
+      <button class="btn btn-primary" id="remove-bg-btn">배경 지우기 ✂️</button>
+      <button class="btn btn-primary hidden" id="save-sticker-btn">저장 💾</button>
+    </div>
+  </section>
+
+  <!-- ===== GALLERY VIEW (surface covered in collected sticker magnets) ===== -->
+  <section id="gallery-view" class="view active" data-surface="fridge" data-mode="tray">
+    <div class="profile-bar" id="profile-bar">
+      <div class="profile-avatar" id="profile-avatar">🏷️</div>
+      <div class="profile-info">
+        <div class="profile-name" id="profile-name">동민의 냉장고</div>
+        <div class="profile-sub" id="sticker-count">0개 모음</div>
+      </div>
+      <button class="surface-btn hidden" id="gacha-shake-btn" title="흔들어서 쏟기">🎲</button>
+      <button class="surface-btn" id="surface-btn" title="붙일 곳 바꾸기">🏠</button>
+    </div>
+    <div class="gallery-mode-toggle" id="gallery-mode-toggle">
+      <button class="mode-tab active" data-mode="tray">🗂️ 보관함</button>
+      <button class="mode-tab" data-mode="board">🧲 냉장고</button>
+    </div>
+    <div class="fridge-handle" aria-hidden="true"></div>
+    <div class="gallery-scroll">
+      <div class="tray-grid" id="tray-grid"></div>
+      <div class="empty-state hidden" id="tray-empty">
+        <div class="emoji">🗂️</div>
+        <p>아직 보관함이 비어있어요.<br/>카메라 탭에서 좋아하는 걸 찍어보세요!</p>
+      </div>
+      <div class="fridge-door" id="fridge-door"></div>
+      <div class="empty-state hidden" id="empty-state">
+        <div class="emoji">🧲</div>
+        <p>아직 붙인 마그넷이 없어요.<br/>보관함에서 마그넷을 골라 붙여보세요!</p>
+      </div>
+    </div>
+    <div class="edit-toolbar" id="edit-toolbar">
+      <button class="edit-toolbar-btn" id="edit-decorate-btn">🎨 꾸미기</button>
+      <button class="edit-toolbar-btn secondary" id="edit-deselect-btn">선택 해제</button>
+    </div>
+  </section>
+
+  <!-- ===== CALENDAR VIEW ===== -->
+  <section id="calendar-view" class="view">
+    <div class="topbar">
+      <h1><span id="calendar-title">2026년 8월</span></h1>
+      <div class="calendar-nav">
+        <button class="icon-btn-sm" id="cal-prev-btn">‹</button>
+        <button class="icon-btn-sm" id="cal-today-btn">오늘</button>
+        <button class="icon-btn-sm" id="cal-next-btn">›</button>
+      </div>
+    </div>
+    <div class="calendar-scroll">
+      <div class="weekday-row">
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn" data-tab="camera-view">
+      <span class="nav-icon">📸</span>카메라
+    </button>
+    <button class="nav-btn active" data-tab="gallery-view">
+      <span class="nav-icon">🏷️</span>내 마그넷
+    </button>
+    <button class="nav-btn" data-tab="calendar-view">
+      <span class="nav-icon">📅</span>달력
+    </button>
+  </nav>
+</div>
+
+<!-- ===== SURFACE PICKER (choose what the magnets are stuck to) ===== -->
+<div id="surface-sheet">
+  <div class="day-sheet-panel">
+    <div class="day-sheet-header">
+      <div class="day-sheet-title">어디에 붙일까요?</div>
+      <button class="lightbox-close" id="surface-sheet-close">✕</button>
+    </div>
+    <div class="surface-options">
+      <button class="surface-option" data-surface="fridge">
+        <span class="surface-swatch surface-swatch-fridge"></span>
+        <span>냉장고</span>
+      </button>
+      <button class="surface-option" data-surface="whiteboard">
+        <span class="surface-swatch surface-swatch-whiteboard"></span>
+        <span>화이트보드</span>
+      </button>
+      <button class="surface-option" data-surface="door">
+        <span class="surface-swatch surface-swatch-door"></span>
+        <span>현관문</span>
+      </button>
+      <button class="surface-option" data-surface="partition">
+        <span class="surface-swatch surface-swatch-partition"></span>
+        <span>파티션</span>
+      </button>
+      <button class="surface-option" data-surface="gacha">
+        <span class="surface-swatch surface-swatch-gacha"></span>
+        <span>가챠</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DECORATE SHEET (per-magnet design: border, 3D, caption, bubble) ===== -->
+<div id="decorate-sheet">
+  <div class="day-sheet-panel">
+    <div class="day-sheet-header">
+      <div class="day-sheet-title">마그넷 꾸미기</div>
+      <button class="lightbox-close" id="decorate-sheet-close">✕</button>
+    </div>
+    <div class="decorate-body">
+      <div class="decorate-row">
+        <label class="decorate-label">테두리 색</label>
+        <div class="decorate-border-controls">
+          <input type="color" id="decorate-border-color" value="#ff7ac6" />
+          <button class="decorate-clear-btn" id="decorate-border-clear">테두리 없음</button>
+        </div>
+      </div>
+      <div class="decorate-row decorate-row-toggle">
+        <label class="decorate-label" for="decorate-convex">볼록한 입체감</label>
+        <input type="checkbox" id="decorate-convex" class="decorate-toggle" />
+      </div>
+      <div class="decorate-row">
+        <label class="decorate-label" for="decorate-caption">하단 글자 박스</label>
+        <input type="text" id="decorate-caption" maxlength="14" placeholder="예: 제주도 2026" />
+      </div>
+      <div class="decorate-row">
+        <label class="decorate-label" for="decorate-bubble">말풍선</label>
+        <input type="text" id="decorate-bubble" maxlength="14" placeholder="예: 오늘 최고!" />
+      </div>
+      <button class="btn btn-primary decorate-confirm-btn" id="decorate-confirm-btn">확인 ✅</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DAY SHEET (stickers saved on a specific date) ===== -->
+<div id="day-sheet">
+  <div class="day-sheet-panel">
+    <div class="day-sheet-header">
+      <div class="day-sheet-title" id="day-sheet-title">8월 18일</div>
+      <button class="lightbox-close" id="day-sheet-close">✕</button>
+    </div>
+    <div class="day-sheet-scroll">
+      <div class="gallery-grid" id="day-sheet-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LIGHTBOX ===== -->
+<div id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">✕</button>
+  <div class="lightbox-stage checker-bg">
+    <img id="lightbox-img" alt="스티커 크게 보기" />
+  </div>
+  <div class="lightbox-controls">
+    <button class="btn btn-primary lightbox-place-btn hidden" id="lightbox-place">냉장고에 붙이기 🧲</button>
+    <div class="lightbox-controls-row">
+      <button class="btn btn-secondary" id="lightbox-delete">삭제</button>
+      <button class="btn btn-primary" id="lightbox-share">공유 / 저장 📤</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
